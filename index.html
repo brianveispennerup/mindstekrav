@@ -6,41 +6,50 @@
 <title>Mindstekrav — Matematiktræner</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,sans-serif;padding:1.5rem;background:#f5f5f0;min-height:100vh}
+body{font-family:system-ui,sans-serif;padding:1.5rem;background:#f5f5f0;min-height:100vh;max-width:680px;margin:0 auto}
 .screen{display:none}.screen.active{display:block}
 .card{background:#fff;border:1px solid #e0e0d8;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
 .forloeb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:1rem}
-.f-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.75rem 1rem;cursor:pointer;font-size:14px;font-weight:500;color:#222;text-align:left;transition:background 0.15s}
+.f-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.75rem 1rem;cursor:pointer;font-size:13px;font-weight:500;color:#222;text-align:left;transition:background 0.15s;line-height:1.4}
 .f-btn:hover{background:#f0f0ec}
 .f-btn.active{border:2px solid #185FA5;background:#E6F1FB;color:#0C447C}
-.q-label{font-size:12px;color:#666;margin-bottom:6px;font-weight:500}
-.q-text{font-size:16px;color:#111;line-height:1.6;margin-bottom:1.25rem}
-.mc-option{display:block;width:100%;text-align:left;background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1rem;margin-bottom:8px;cursor:pointer;font-size:15px;color:#222;transition:background 0.1s}
+.q-label{font-size:12px;color:#666;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.q-text{font-size:15px;color:#111;line-height:1.7;margin-bottom:1.25rem}
+.mc-option{display:block;width:100%;text-align:left;background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1rem;margin-bottom:8px;cursor:pointer;font-size:14px;color:#222;transition:background 0.1s}
 .mc-option:hover{background:#f0f0ec}
-.mc-option.correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A}
-.mc-option.wrong{background:#FCEBEB;border:2px solid #A32D2D;color:#791F1F}
-.mc-option.show-correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A}
+.mc-option.correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A;pointer-events:none}
+.mc-option.wrong{background:#FCEBEB;border:2px solid #A32D2D;color:#791F1F;pointer-events:none}
+.mc-option.show-correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A;pointer-events:none}
+.mc-option.disabled{pointer-events:none;opacity:0.55}
 .input-row{display:flex;gap:8px;align-items:center;margin-bottom:1rem}
-.input-row input{flex:1;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px}
-.feedback{border-radius:8px;padding:0.75rem 1rem;font-size:14px;margin-bottom:1rem;display:none}
+.input-row input{flex:1;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px;background:#fff;color:#111}
+.input-row input:disabled{background:#f5f5f0;color:#888}
+.feedback{border-radius:8px;padding:0.75rem 1rem;font-size:14px;margin-bottom:1rem;display:none;line-height:1.6}
 .feedback.correct{background:#EAF3DE;color:#27500A;display:block}
 .feedback.wrong{background:#FCEBEB;color:#791F1F;display:block}
 .score-row{display:flex;gap:12px;margin-bottom:1rem}
 .score-box{background:#f5f5f0;border-radius:8px;padding:0.75rem 1rem;flex:1;text-align:center}
 .score-box .num{font-size:24px;font-weight:500;color:#111}
 .score-box .lbl{font-size:12px;color:#666}
-button.primary{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1.2rem;font-size:14px;cursor:pointer;color:#222}
+button.primary{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1.2rem;font-size:14px;cursor:pointer;color:#222;transition:background 0.15s}
 button.primary:hover{background:#f0f0ec}
+.graph-wrap{margin:1rem 0;border:1px solid #e0e0d8;border-radius:8px;overflow:hidden;background:#fff}
+canvas{display:block}
 .progress-bar{height:4px;background:#e0e0d8;border-radius:2px;margin-bottom:1.25rem}
 .progress-fill{height:4px;background:#185FA5;border-radius:2px;transition:width 0.3s}
+h1{font-size:18px;font-weight:500;color:#111;margin-bottom:4px}
+.sub{font-size:14px;color:#666;margin-bottom:1rem}
+table.freq-table{width:100%;border-collapse:collapse;font-size:14px;margin:1rem 0}
+table.freq-table th{background:#f5f5f0;padding:6px 10px;text-align:left;border:1px solid #e0e0d8;font-weight:500}
+table.freq-table td{padding:6px 10px;border:1px solid #e0e0d8}
 </style>
 </head>
 <body>
 
 <div id="screen-select" class="screen active">
   <div class="card">
-    <p style="font-size:18px;font-weight:500;margin-bottom:4px">Mindstekrav — matematiktræner</p>
-    <p style="font-size:14px;color:#666;margin-bottom:1rem">Vælg et forløb og start træning</p>
+    <h1>Mindstekrav — matematiktræner</h1>
+    <p class="sub">Vælg et forløb. Opgaverne genereres med tilfældige tal og grafer hver gang.</p>
     <div class="forloeb-grid" id="forloeb-grid"></div>
   </div>
   <div class="card">
@@ -48,10 +57,10 @@ button.primary:hover{background:#f0f0ec}
     <div style="display:flex;gap:8px;flex-wrap:wrap" id="count-btns">
       <button class="f-btn active" onclick="setCount(5,this)">5</button>
       <button class="f-btn" onclick="setCount(10,this)">10</button>
-      <button class="f-btn" onclick="setCount(999,this)">Alle</button>
+      <button class="f-btn" onclick="setCount(15,this)">15</button>
     </div>
   </div>
-  <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.75rem">Start træning</button>
+  <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.75rem;font-size:15px">Start træning</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -62,6 +71,7 @@ button.primary:hover{background:#f0f0ec}
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     <p class="q-label" id="q-type-label"></p>
+    <div id="q-extra"></div>
     <p class="q-text" id="q-text"></p>
     <div id="mc-options"></div>
     <div id="input-area" style="display:none">
@@ -71,16 +81,16 @@ button.primary:hover{background:#f0f0ec}
       </div>
     </div>
     <div class="feedback" id="feedback"></div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;margin-top:4px">
       <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
-      <button class="primary" onclick="goHome()" style="font-size:13px;color:#666">Afslut</button>
+      <button class="primary" onclick="goHome()" style="font-size:13px;color:#888">Afslut</button>
     </div>
   </div>
 </div>
 
 <div id="screen-result" class="screen">
   <div class="card">
-    <p style="font-size:18px;font-weight:500;margin-bottom:1rem">Resultat</p>
+    <h1 style="margin-bottom:1rem">Resultat</h1>
     <div class="score-row">
       <div class="score-box"><div class="num" id="res-correct">0</div><div class="lbl">Rigtige</div></div>
       <div class="score-box"><div class="num" id="res-wrong">0</div><div class="lbl">Forkerte</div></div>
@@ -94,72 +104,352 @@ button.primary:hover{background:#f0f0ec}
 </div>
 
 <script>
-const FORLOEB = {
-  F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",
-  F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",
-  F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"
-};
-const QUESTIONS = {
+const FORLOEB={F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"};
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d));}
+function shuffle(a){let r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+function fmt(n){return String(n).replace('.',',');}
+function fak(n){return n<=1?1:n*fak(n-1);}
+
+// --- GRAPH HELPERS ---
+function makeCanvas(w,h){
+  const c=document.createElement('canvas');
+  c.width=w;c.height=h;c.style.width='100%';
+  return c;
+}
+
+function drawAxes(ctx,W,H,xMin,xMax,yMin,yMax){
+  const px=(x)=>Math.round((x-xMin)/(xMax-xMin)*W);
+  const py=(y)=>Math.round(H-(y-yMin)/(yMax-yMin)*H);
+  ctx.strokeStyle='#ccc';ctx.lineWidth=0.5;
+  // grid
+  for(let x=Math.ceil(xMin);x<=xMax;x++){ctx.beginPath();ctx.moveTo(px(x),0);ctx.lineTo(px(x),H);ctx.stroke();}
+  for(let y=Math.ceil(yMin);y<=yMax;y++){ctx.beginPath();ctx.moveTo(0,py(y));ctx.lineTo(W,py(y));ctx.stroke();}
+  // axes
+  ctx.strokeStyle='#666';ctx.lineWidth=1.5;
+  if(yMin<=0&&yMax>=0){ctx.beginPath();ctx.moveTo(0,py(0));ctx.lineTo(W,py(0));ctx.stroke();}
+  if(xMin<=0&&xMax>=0){ctx.beginPath();ctx.moveTo(px(0),0);ctx.lineTo(px(0),H);ctx.stroke();}
+  // labels
+  ctx.fillStyle='#888';ctx.font='11px system-ui';ctx.textAlign='center';
+  for(let x=Math.ceil(xMin);x<=xMax;x+=Math.ceil((xMax-xMin)/8)){
+    if(x===0)continue;
+    const ypos=yMin<=0&&yMax>=0?py(0)+13:H-4;
+    ctx.fillText(x,px(x),ypos);
+  }
+  ctx.textAlign='right';
+  for(let y=Math.ceil(yMin);y<=yMax;y+=Math.ceil((yMax-yMin)/6)){
+    if(y===0)continue;
+    const xpos=xMin<=0&&xMax>=0?px(0)-4:30;
+    ctx.fillText(y,xpos,py(y)+4);
+  }
+  return {px,py};
+}
+
+function plotFunc(ctx,fn,xMin,xMax,px,py,color,steps){
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
+  let first=true;
+  for(let i=0;i<=(steps||300);i++){
+    const x=xMin+(xMax-xMin)*i/(steps||300);
+    const y=fn(x);
+    if(!isFinite(y))continue;
+    if(first){ctx.moveTo(px(x),py(y));first=false;}
+    else ctx.lineTo(px(x),py(y));
+  }
+  ctx.stroke();
+}
+
+// Draw sumkurve (ogive)
+function drawSumkurve(ages,cumFreqs,answer){
+  const W=580,H=260;
+  const c=makeCanvas(W,H);
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const pad={l:45,r:20,t:20,b:35};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  // axes
+  ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+iH);ctx.lineTo(pad.l+iW,pad.t+iH);ctx.stroke();
+  // grid
+  ctx.strokeStyle='#eee';ctx.lineWidth=0.5;
+  for(let y=0;y<=100;y+=10){
+    const yp=pad.t+iH-(y/100)*iH;
+    ctx.beginPath();ctx.moveTo(pad.l,yp);ctx.lineTo(pad.l+iW,yp);ctx.stroke();
+    ctx.fillStyle='#888';ctx.font='11px system-ui';ctx.textAlign='right';
+    ctx.fillText(y,pad.l-6,yp+4);
+  }
+  const n=ages.length;
+  const xScale=(x)=>pad.l+(x-ages[0])/(ages[n-1]-ages[0])*iW;
+  const yScale=(y)=>pad.t+iH-(y/100)*iH;
+  // x labels
+  ctx.fillStyle='#888';ctx.font='11px system-ui';ctx.textAlign='center';
+  ages.forEach(a=>ctx.fillText(a,xScale(a),pad.t+iH+16));
+  // plot
+  ctx.strokeStyle='#185FA5';ctx.lineWidth=2;ctx.beginPath();
+  ages.forEach((a,i)=>{
+    if(i===0)ctx.moveTo(xScale(a),yScale(cumFreqs[i]));
+    else ctx.lineTo(xScale(a),yScale(cumFreqs[i]));
+  });
+  ctx.stroke();
+  // dots
+  ages.forEach((a,i)=>{
+    ctx.fillStyle='#185FA5';ctx.beginPath();
+    ctx.arc(xScale(a),yScale(cumFreqs[i]),4,0,Math.PI*2);ctx.fill();
+  });
+  // quartile lines (shown after answer)
+  ctx.strokeStyle='rgba(200,0,0,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  [25,50,75].forEach(q=>{
+    ctx.beginPath();ctx.moveTo(pad.l,yScale(q));ctx.lineTo(pad.l+iW,yScale(q));ctx.stroke();
+    ctx.fillStyle='rgba(200,0,0,0.5)';ctx.font='10px system-ui';ctx.textAlign='left';
+    ctx.fillText('Q'+([25,50,75].indexOf(q)+1),pad.l+2,yScale(q)-3);
+  });
+  ctx.setLineDash([]);
+  // axis titles
+  ctx.fillStyle='#666';ctx.font='11px system-ui';ctx.textAlign='center';
+  ctx.fillText('Alder',pad.l+iW/2,H-2);
+  ctx.save();ctx.translate(12,pad.t+iH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('Summeret frekvens (%)',0,0);ctx.restore();
+  return c;
+}
+
+// Draw exponential graph for reading T2
+function drawExpGraph(b,a,xMin,xMax){
+  const W=560,H=240;
+  const c=makeCanvas(W,H);
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const fn=x=>b*Math.pow(a,x);
+  const yMax=fn(xMax)*1.1, yMin=0;
+  const {px,py}=drawAxes(ctx,W,H,xMin,xMax,yMin,yMax);
+  plotFunc(ctx,fn,xMin,xMax,px,py,'#185FA5');
+  return c;
+}
+
+// Draw parabola
+function drawParabola(a,b,c,xMin,xMax){
+  const W=560,H=240;
+  const cv=makeCanvas(W,H);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const fn=x=>a*x*x+b*x+c;
+  const xs=Array.from({length:200},(_,i)=>xMin+(xMax-xMin)*i/199);
+  const ys=xs.map(fn);
+  const yMin=Math.min(...ys)-1, yMax=Math.max(...ys)+1;
+  const {px,py}=drawAxes(cv.getContext('2d'),W,H,xMin,xMax,yMin,yMax);
+  plotFunc(ctx,fn,xMin,xMax,px,py,'#185FA5');
+  return cv;
+}
+
+// Draw f and f' both
+function drawFandFprime(a,b,c){
+  const W=560,H=240;
+  const cv=makeCanvas(W,H);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const xMin=-8,xMax=12;
+  const fn=x=>a*x*x*x+b*x*x+c*x;
+  const fp=x=>3*a*x*x+2*b*x+c;
+  const xs=Array.from({length:200},(_,i)=>xMin+(xMax-xMin)*i/199);
+  const allY=[...xs.map(fn),...xs.map(fp)];
+  const yMin=Math.min(...allY)*1.1, yMax=Math.max(...allY)*1.1;
+  const {px,py}=drawAxes(ctx,W,H,xMin,xMax,yMin,yMax);
+  plotFunc(ctx,fn,xMin,xMax,px,py,'#185FA5');
+  plotFunc(ctx,fp,xMin,xMax,px,py,'#C0392B');
+  // legend
+  ctx.font='12px system-ui';
+  ctx.fillStyle='#185FA5';ctx.fillRect(W-110,10,14,3);ctx.fillText('f(x)',W-92,14);
+  ctx.fillStyle='#C0392B';ctx.fillRect(W-110,24,14,3);ctx.fillText("f'(x)",W-92,28);
+  return cv;
+}
+
+// Draw binomial distribution bar chart
+function drawBinom(n,p){
+  const W=560,H=200;
+  const cv=makeCanvas(W,H);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  function C(n,k){return fak(n)/(fak(k)*fak(n-k));}
+  const probs=Array.from({length:n+1},(_,k)=>C(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k));
+  const maxP=Math.max(...probs);
+  const pad={l:40,r:10,t:15,b:30};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const bw=iW/(n+1)*0.7, gap=iW/(n+1);
+  // y axis
+  ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+iH);ctx.lineTo(pad.l+iW,pad.t+iH);ctx.stroke();
+  // bars
+  probs.forEach((p2,k)=>{
+    const bh=(p2/maxP)*iH;
+    const bx=pad.l+k*gap+(gap-bw)/2;
+    const by=pad.t+iH-bh;
+    ctx.fillStyle='#B5D4F4';ctx.strokeStyle='#185FA5';ctx.lineWidth=0.5;
+    ctx.fillRect(bx,by,bw,bh);ctx.strokeRect(bx,by,bw,bh);
+    ctx.fillStyle='#444';ctx.font='10px system-ui';ctx.textAlign='center';
+    ctx.fillText(k,bx+bw/2,pad.t+iH+14);
+  });
+  // y labels
+  ctx.fillStyle='#888';ctx.font='10px system-ui';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const v=maxP*i/4;
+    const yp=pad.t+iH-(v/maxP)*iH;
+    ctx.fillText(v.toFixed(2),pad.l-4,yp+3);
+  }
+  ctx.fillStyle='#555';ctx.font='11px system-ui';ctx.textAlign='center';
+  ctx.fillText('Antal succeser',pad.l+iW/2,H-2);
+  return cv;
+}
+
+// Draw pindediagram
+function drawPinde(vals,freqs){
+  const W=560,H=200;
+  const cv=makeCanvas(W,H);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const maxF=Math.max(...freqs);
+  const pad={l:40,r:10,t:15,b:30};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const n=vals.length, bw=iW/n*0.15, gap=iW/n;
+  ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+iH);ctx.lineTo(pad.l+iW,pad.t+iH);ctx.stroke();
+  vals.forEach((v,i)=>{
+    const bh=(freqs[i]/maxF)*iH;
+    const bx=pad.l+i*gap+gap/2;
+    ctx.strokeStyle='#185FA5';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(bx,pad.t+iH);ctx.lineTo(bx,pad.t+iH-bh);ctx.stroke();
+    ctx.fillStyle='#185FA5';ctx.beginPath();ctx.arc(bx,pad.t+iH-bh,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#444';ctx.font='11px system-ui';ctx.textAlign='center';
+    ctx.fillText(v,bx,pad.t+iH+14);
+  });
+  for(let i=0;i<=4;i++){
+    const v=maxF*i/4;
+    const yp=pad.t+iH-(v/maxF)*iH;
+    ctx.fillStyle='#888';ctx.font='10px system-ui';ctx.textAlign='right';
+    ctx.fillText(Math.round(v),pad.l-4,yp+3);
+  }
+  return cv;
+}
+
+// --- QUESTION GENERATORS ---
+const GENERATORS={
   F1:[
-    {type:"mc",text:"En lineær funktion har forskriften f(x) = 3x + 2. Hvad er hældningskoefficienten?",options:["2","3","5","−3"],correct:1},
-    {type:"mc",text:"Hvad er nulpunktet for f(x) = 2x − 6?",options:["x = 6","x = 3","x = −3","x = 2"],correct:1},
-    {type:"input",text:"Bestem værdien af f(4), når f(x) = 5x − 3.",answer:"17",accept:["17"]},
-    {type:"mc",text:"En lineær funktion går gennem (0, 4) og (2, 8). Hvad er forskriften?",options:["f(x) = 2x + 4","f(x) = 4x + 2","f(x) = 2x − 4","f(x) = x + 4"],correct:0},
-    {type:"input",text:"Bestem skæringen med y-aksen for f(x) = −2x + 7.",answer:"7",accept:["7"]},
-    {type:"mc",text:"Hvad er den omvendte funktion til f(x) = 4x + 8?",options:["f⁻¹(x) = (x−8)/4","f⁻¹(x) = 4x−8","f⁻¹(x) = x/4 + 8","f⁻¹(x) = (x+8)/4"],correct:0},
-    {type:"input",text:"En taxa koster 35 kr i startgebyr og 12 kr/km. Hvad koster en tur på 5 km?",answer:"95",accept:["95","95 kr"]},
+    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`En lineær funktion har forskriften f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er hældningskoefficienten?`,answer:String(a),accept:[String(a)],explanation:`Hældningskoefficienten er a = ${a}.`};},
+    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`Hvad er skæringen med y-aksen for f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}?`,answer:String(b),accept:[String(b)],explanation:`b-værdien er ${b}. Det er f(0).`};},
+    ()=>{const a=rnd(1,5),b=rnd(-20,20);const np=-b/a;if(!Number.isInteger(np))return GENERATORS.F1[2]();return{type:"input",text:`Bestem nulpunktet for f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`,answer:String(np),accept:[String(np),"x="+np],explanation:`${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} = 0 → x = ${np}`};},
+    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10),x=rnd(-5,5);const fx=a*x+b;return{type:"input",text:`Bestem f(${x}), når f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`,answer:String(fx),accept:[String(fx)],explanation:`f(${x}) = ${a}·${x} ${b>=0?'+ '+b:'− '+Math.abs(b)} = ${fx}`};},
+    ()=>{const a=rnd(-4,4)||1,b=rnd(-8,8);const x1=rnd(0,3),y1=a*x1+b,x2=x1+rnd(1,4),y2=a*x2+b;return{type:"input",text:`En lineær funktion går gennem (${x1}, ${y1}) og (${x2}, ${y2}). Hvad er hældningskoefficienten?`,answer:String(a),accept:[String(a)],explanation:`a = (${y2}−${y1})/(${x2}−${x1}) = ${y2-y1}/${x2-x1} = ${a}`};},
+    ()=>{const s=rnd(20,60),p=rnd(8,20),k=rnd(3,15),t=s+p*k;return{type:"input",text:`En taxa koster ${s} kr i startgebyr og ${p} kr/km. Hvad koster en tur på ${k} km?`,answer:String(t),accept:[String(t),t+" kr"],explanation:`${s} + ${p}·${k} = ${s} + ${p*k} = ${t} kr`};},
+    ()=>{const a=rnd(1,5),b=rnd(-10,10);return{type:"mc",text:`Hvad er den omvendte funktion til f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}?`,options:[`f⁻¹(x) = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`,`f⁻¹(x) = ${a}x ${b>=0?'− '+b:'+ '+Math.abs(b)}`,`f⁻¹(x) = x / ${a} ${b>=0?'+ '+b:'− '+Math.abs(b)}`,`f⁻¹(x) = (x${b>=0?' + '+b:' − '+Math.abs(b)}) / ${a}`],correct:0,explanation:`Byt om: x = ${a}·y ${b>=0?'+ '+b:'− '+Math.abs(b)} → y = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`};},
+    ()=>{const a=rnd(-4,4)||1,b=rnd(-5,5);return{type:"mc",text:`Er f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} voksende eller aftagende?`,options:["Voksende","Aftagende"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → voksende":"negativ → aftagende"}.`};},
+    ()=>{const a=rnd(-3,3)||1,b=rnd(-6,6),c=rnd(-6,6);return{type:"input",text:`Reducér: ${a===1?'':a}(${Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}) ${a*b>=0?'+ ':'− '}${Math.abs(a*c)}.`,answer:fmt(a*b)+"x",accept:[fmt(a*b)+"x",String(a*b)+"x"],explanation:`${a}·${b}x ${a>=0?'+ ':' '}${a}·${c} ${a*b>=0?'+ ':'− '}${Math.abs(a*c)} = ${a*b}x + ${a*c+a*c}`};},
   ],
   F2:[
-    {type:"mc",text:"En eksponentiel funktion f(x) = 3 · 1,5ˣ. Hvad er begyndelsesværdien?",options:["1,5","3","4,5","0"],correct:1},
-    {type:"mc",text:"Hvilken funktion er aftagende?",options:["f(x) = 2 · 1,3ˣ","f(x) = 5 · 0,8ˣ","f(x) = 1 · 1,0ˣ","f(x) = 4 · 2ˣ"],correct:1},
-    {type:"input",text:"Hvad er vækstraten (i %) for f(x) = 10 · 1,04ˣ?",answer:"4",accept:["4","4%","4 %"]},
-    {type:"mc",text:"Hvad forstås ved en halveringskonstant T½?",options:["Den x-værdi hvor funktionen er halveret","Den tid det tager at vokse til det dobbelte","Startværdien divideret med 2","Hældningen halveret"],correct:0},
-    {type:"input",text:"Bestem f(0) for f(x) = 250 · 0,92ˣ.",answer:"250",accept:["250"]},
+    ()=>{const b=rnd(2,100),a=rndF(0.8,1.5,2);return{type:"input",text:`En eksponentiel funktion: f(x) = ${b} · ${fmt(a)}ˣ. Hvad er begyndelsesværdien?`,answer:String(b),accept:[String(b)],explanation:`f(0) = ${b} · 1 = ${b}`};},
+    ()=>{const r=rnd(1,25),b=rnd(2,50),a=parseFloat((1+r/100).toFixed(2));return{type:"input",text:`Hvad er vækstraten i % for f(x) = ${b} · ${fmt(a)}ˣ?`,answer:String(r),accept:[String(r),r+"%"],explanation:`a = ${fmt(a)} = 1 + r/100 → r = ${r}%`};},
+    ()=>{
+      const rising=Math.random()>0.5,a=rising?rndF(1.1,2.0,2):rndF(0.5,0.9,2),b=rnd(1,5);
+      const T=rising?Math.round(Math.log(2)/Math.log(a)*10)/10:Math.round(Math.log(0.5)/Math.log(a)*10)/10;
+      const word=rising?"fordoblingskonstanten T₂":"halveringskonstanten T½";
+      const xMax=Math.ceil(T*3)+1;
+      const graphEl=drawExpGraph(b,a,0,xMax);
+      return{type:"input",text:`Aflæs ${word} fra grafen nedenfor. (afrund til 1 decimal)`,graph:graphEl,answer:fmt(T),accept:[fmt(T),String(T)],explanation:`${word} er den x-værdi, hvor funktionen er ${rising?"fordoblet":"halveret"}. Her T = ${fmt(T)}.`};
+    },
+    ()=>{const rising=Math.random()>0.5,a=rising?rndF(1.1,1.8,2):rndF(0.5,0.9,2),b=rnd(2,50);return{type:"mc",text:`Er f(x) = ${b} · ${fmt(a)}ˣ voksende eller aftagende?`,options:["Voksende","Aftagende"],correct:rising?0:1,explanation:`a = ${fmt(a)} er ${a>1?"større end 1 → voksende":"mindre end 1 → aftagende"}.`};},
+    ()=>{const base=rnd(2,5),exp=rnd(2,4),bv=rnd(1,4),rhs=bv*Math.pow(base,exp);return{type:"input",text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,answer:String(exp),accept:[String(exp),"x="+exp],explanation:`${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`};},
+    ()=>{
+      const a1=rndF(1.3,2.0,2),b1=rnd(2,6),a2=rndF(0.5,0.8,2),b2=rnd(2,6),a3=rndF(1.05,1.15,2),b3=rnd(8,15);
+      const funcs=[`f(x) = ${b1} · ${fmt(a1)}ˣ`,`g(x) = ${b2} · ${fmt(a2)}ˣ`,`h(x) = ${b3} · ${fmt(a3)}ˣ`];
+      const which=rnd(0,2);
+      const chosenA=[a1,a2,a3][which],chosenB=[b1,b2,b3][which];
+      const xMax=8;
+      const graphEl=drawExpGraph(chosenB,chosenA,-4,xMax);
+      return{type:"mc",text:`Hvilken forskrift passer til grafen?`,graph:graphEl,options:funcs,correct:which,explanation:`Begyndelsesværdien (f(0)) er ${chosenB} og funktionen er ${chosenA>1?"voksende":"aftagende"} med a = ${fmt(chosenA)}.`};
+    },
   ],
   F3:[
-    {type:"mc",text:"Hvad er diskriminanten for f(x) = x² + 4x + 4?",options:["0","8","16","−4"],correct:0},
-    {type:"mc",text:"Diskriminanten er positiv. Hvad betyder det for nulpunkterne?",options:["Ingen nulpunkter","Præcis ét nulpunkt","To nulpunkter","Funktionen er konstant"],correct:2},
-    {type:"input",text:"Hvad er x-koordinaten til toppunktet for f(x) = x² − 6x + 11?",answer:"3",accept:["3","x=3","x = 3"]},
-    {type:"mc",text:"Hvad er minimumspunktet for f(x) = x² + 4x + 1?",options:["(−2, −3)","(2, 13)","(0, 1)","(−4, 1)"],correct:0},
-    {type:"input",text:"Bestem det mindste nulpunkt for f(x) = x² − 5x + 6.",answer:"2",accept:["2","x=2"]},
+    ()=>{const a=rnd(1,3),b=rnd(-6,6),c=rnd(-5,5),d=b*b-4*a*c;return{type:"input",text:`Beregn diskriminanten for f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}.`,answer:String(d),accept:[String(d)],explanation:`d = b²−4ac = ${b}²−4·${a}·${c} = ${b*b}−${4*a*c} = ${d}`};},
+    ()=>{const scenarios=[{d:rnd(1,20),ans:0},{d:0,ans:1},{d:-rnd(1,10),ans:2}];const s=scenarios[rnd(0,2)];return{type:"mc",text:`Diskriminanten er d = ${s.d}. Hvad kan siges om nulpunkterne?`,options:["To nulpunkter","Præcis ét nulpunkt","Ingen nulpunkter"],correct:s.ans,explanation:["d > 0 → to nulpunkter","d = 0 → præcis ét nulpunkt","d < 0 → ingen nulpunkter"][s.ans]};},
+    ()=>{
+      const a=rnd(1,2)*(Math.random()>0.5?1:-1),xTop=rnd(-4,4),c=rnd(-5,5),b=-2*a*xTop;
+      const graphEl=drawParabola(a,b,c,xTop-5,xTop+5);
+      return{type:"input",text:`Bestem x-koordinaten til toppunktet ud fra grafen. (brug x = −b/2a)`,graph:graphEl,answer:String(xTop),accept:[String(xTop),"x="+xTop],explanation:`x = −b/(2a) = −(${b})/(2·${a}) = ${xTop}`};
+    },
+    ()=>{const r1=rnd(-5,5),r2=rnd(-5,5),b=-(r1+r2),c=r1*r2,mn=Math.min(r1,r2);return{type:"input",text:`Bestem det mindste nulpunkt for f(x) = x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}.`,answer:String(mn),accept:[String(mn),"x="+mn],explanation:`Nulpunkterne er ${r1} og ${r2}. Det mindste er ${mn}.`};},
+    ()=>{const a=rnd(1,3)*(Math.random()>0.5?1:-1),xT=rnd(-4,4),b=-2*a*xT,c=rnd(-5,5),yT=a*xT*xT+b*xT+c;return{type:"mc",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}. Åbner parablen opad eller nedad?`,options:["Opad — a > 0","Nedad — a < 0"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → åbner opad":"negativ → åbner nedad"}.`};},
+    ()=>{
+      const a=rnd(1,2)*(Math.random()>0.5?1:-1),b=rnd(-4,4),c=rnd(-8,8);
+      const graphEl=drawParabola(a,b,c,-6,6);
+      return{type:"mc",text:`Grafen viser et andengradspolynomium. Hvad er fortegnet for a?`,graph:graphEl,options:["a > 0 (åbner opad)","a < 0 (åbner nedad)"],correct:a>0?0:1,explanation:`Parablen åbner ${a>0?"opad → a > 0":"nedad → a < 0"}.`};
+    },
   ],
   F4:[
-    {type:"mc",text:"Hvad er den afledede af f(x) = 3x² + 2x?",options:["6x + 2","3x + 2","6x","3x²"],correct:0},
-    {type:"input",text:"Bestem f'(2) for f(x) = x³ − 3x.",answer:"9",accept:["9"]},
-    {type:"mc",text:"Hvad siger f'(x) > 0 om funktionen f?",options:["f er aftagende","f er voksende","f har et maksimum","f er konstant"],correct:1},
-    {type:"mc",text:"Hvad er den afledede af f(x) = 5x?",options:["5x","5","0","x"],correct:1},
-    {type:"input",text:"Bestem f'(1) for f(x) = 2x² − 4x + 1.",answer:"-2",accept:["-2","−2"]},
+    ()=>{const a=rnd(-4,4)||1,b=rnd(-5,5),dA=2*a;return{type:"input",text:`Hvad er koefficienten foran x i f'(x), når f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x?`,answer:String(dA),accept:[String(dA)],explanation:`f'(x) = ${dA}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Koefficienten er ${dA}.`};},
+    ()=>{const a=rnd(-3,3)||1,b=rnd(-5,5),x0=rnd(-4,4),fpx=2*a*x0+b;return{type:"input",text:`Bestem f'(${x0}) for f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x.`,answer:String(fpx),accept:[String(fpx)],explanation:`f'(x) = ${2*a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} → f'(${x0}) = ${fpx}`};},
+    ()=>{
+      const a=rndF(0.3,1.5,1)*(Math.random()>0.5?1:-1),b=rndF(-1,1,1),c=rndF(-3,3,1);
+      const graphEl=drawFandFprime(a,b,c);
+      const rising=a>0;
+      return{type:"mc",text:`Den blå kurve er f(x) og den røde er f'(x). Hvad kan aflæses fra grafen?`,graph:graphEl,options:["f'(x) = 0 i et punkt, hvor f(x) har et ekstremum","f'(x) og f(x) er ens overalt","f'(x) er altid positiv","f(x) har ingen nulpunkter"],correct:0,explanation:`Hvor f'(x) skærer x-aksen (f'(x)=0), har f(x) et ekstremum (top- eller bundpunkt).`};
+    },
+    ()=>{const a=rnd(1,3)*(Math.random()>0.5?1:-1),xE=rnd(-4,4),b=-2*a*xE,c=rnd(-5,5);return{type:"mc",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}. Hvad slags ekstremum er der i x = ${xE}?`,options:["Minimum","Maksimum"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → minimum":"negativ → maksimum"}.`};},
+    ()=>{const a=rnd(-5,5)||1,b=rnd(-8,8);return{type:"input",text:`Hvad er den afledede f'(x) for f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}? (skriv blot tallet)`,answer:String(a),accept:[String(a)],explanation:`Den afledede af ax+b er a. f'(x) = ${a}.`};},
+    ()=>{const a=rnd(1,3),b=rnd(-5,5),x0=rnd(0,5),fpx=2*a*x0+b;return{type:"mc",text:`f'(${x0}) = ${fpx}. Hvad betyder dette?`,options:[`Væksthastigheden i x = ${x0} er ${fpx}`,`Funktionsværdien er ${fpx}`,`Nulpunktet er ${fpx}`,`Funktionen er konstant`],correct:0,explanation:`f'(${x0}) er hældningen — altså den øjeblikkelige væksthastighed i x = ${x0}.`};},
   ],
   F5:[
-    {type:"mc",text:"Hvad forstås ved en annuitet?",options:["Et lån med variabel ydelse","Et lån med fast periodisk ydelse","En opsparingskonto","En rente uden afdrag"],correct:1},
-    {type:"input",text:"Hvad er den månedlige rente (i %), når den årlige rente er 12%?",answer:"1",accept:["1","1%","1 %"]},
-    {type:"mc",text:"Hvad er den effektive årlige rente ved 1% månedlig rente?",options:["12%","12,68%","12,5%","11%"],correct:1},
-    {type:"input",text:"Bestem f(0) for f(x) = 250 · 0,92ˣ.",answer:"250",accept:["250"]},
-    {type:"mc",text:"Hvad sker der med en annuitetsydelse hvis renten stiger?",options:["Ydelsen falder","Ydelsen stiger","Ydelsen er uændret","Lånet afdrages hurtigere"],correct:1},
+    ()=>{const K0=rnd(1,10)*1000,r=rnd(1,8),n=rnd(2,10),Kn=Math.round(K0*Math.pow(1+r/100,n));return{type:"input",text:`${K0} kr indsættes til ${r}% p.a. Hvad er beløbet efter ${n} år? (hele kr)`,answer:String(Kn),accept:[String(Kn),Kn+" kr"],explanation:`Kn = ${K0} · ${fmt(1+r/100)}^${n} = ${Kn} kr`};},
+    ()=>{const rm=rndF(0.3,1.5,1),rEff=Math.round(((Math.pow(1+rm/100,12)-1)*100)*100)/100;return{type:"input",text:`Den månedlige rente er ${fmt(rm)}%. Hvad er den effektive årlige rente? (2 decimaler)`,answer:fmt(rEff),accept:[fmt(rEff),String(rEff)],explanation:`reff = (1+${fmt(rm)}/100)^12 − 1 = ${fmt(rEff)}%`};},
+    ()=>{const K0=rnd(5,30)*10000,rm=rndF(0.3,1.0,1),n=rnd(24,84),r=rm/100,y=Math.round(K0*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)*100)/100;return{type:"input",text:`Annuitetslån på ${K0} kr, ${n} måneder, månedlig rente ${fmt(rm)}%. Månedlig ydelse? (2 decimaler)`,answer:fmt(y),accept:[fmt(y),String(y)],explanation:`y = K₀·r·(1+r)ⁿ/((1+r)ⁿ−1) ≈ ${fmt(y)} kr`};},
+    ()=>{const yv=rnd(2,10)*100,rm=rndF(0.5,1.5,1),n=rnd(6,24),r=rm/100,An=Math.round(yv*(Math.pow(1+r,n)-1)/r*100)/100;return{type:"input",text:`${yv} kr/måned i ${n} måneder, ${fmt(rm)}% månedlig rente. Hvad er fremtidsværdien? (2 decimaler)`,answer:fmt(An),accept:[fmt(An),String(An)],explanation:`An = ${yv}·((1+${fmt(r)})^${n}−1)/${fmt(r)} ≈ ${fmt(An)} kr`};},
+    ()=>{const rq=rndF(0.5,3.0,1),rEff=Math.round(((Math.pow(1+rq/100,4)-1)*100)*100)/100;return{type:"input",text:`Kvartalsrenten er ${fmt(rq)}%. Hvad er den effektive årlige rente? (2 decimaler)`,answer:fmt(rEff),accept:[fmt(rEff),String(rEff)],explanation:`reff = (1+${fmt(rq)}/100)^4 − 1 = ${fmt(rEff)}%`};},
   ],
   F6:[
-    {type:"mc",text:"Hvad er medianen i datasættet: 3, 5, 7, 9, 11?",options:["5","7","9","6"],correct:1},
-    {type:"input",text:"Hvad er gennemsnittet af: 4, 6, 8, 10?",answer:"7",accept:["7"]},
-    {type:"mc",text:"Hvad viser et boksplot?",options:["Gennemsnit og varians","Kvartilsæt og outliers","Frekvenser","Standardafvigelse"],correct:1},
-    {type:"mc",text:"Datasættet: 2, 4, 4, 4, 5, 5, 7, 9. Hvad er typetallet?",options:["4","5","2","7"],correct:0},
-    {type:"input",text:"Hvad er variationsbredden for: 3, 7, 12, 1, 9?",answer:"11",accept:["11"]},
+    ()=>{const n=rnd(4,7),vals=Array.from({length:n},()=>rnd(1,20)),mean=Math.round(vals.reduce((a,b)=>a+b,0)/n*10)/10;return{type:"input",text:`Beregn gennemsnittet af: ${vals.join(', ')}. (1 decimal)`,answer:fmt(mean),accept:[fmt(mean),String(mean)],explanation:`(${vals.join('+')}) / ${n} = ${fmt(mean)}`};},
+    ()=>{const n=rnd(3,7)*2-1,vals=Array.from({length:n},()=>rnd(1,20)).sort((a,b)=>a-b),med=vals[Math.floor(n/2)];return{type:"input",text:`Find medianen: ${vals.join(', ')}.`,answer:String(med),accept:[String(med)],explanation:`Sorteret datasæt. Midterste værdi er ${med}.`};},
+    ()=>{const n=rnd(5,8),vals=Array.from({length:n},()=>rnd(1,30)),vb=Math.max(...vals)-Math.min(...vals);return{type:"input",text:`Hvad er variationsbredden for: ${vals.join(', ')}?`,answer:String(vb),accept:[String(vb)],explanation:`max − min = ${Math.max(...vals)} − ${Math.min(...vals)} = ${vb}`};},
+    ()=>{
+      const total=rnd(50,150);
+      const ages=[15,20,25,30,35,40,45,50,55,60];
+      const cumFreqs=[rnd(0,3),rnd(5,15),rnd(20,35),rnd(45,60),rnd(65,75),rnd(80,88),rnd(90,94),rnd(96,98),rnd(98,99),100];
+      function readQ(pct){let i=0;while(i<cumFreqs.length-1&&cumFreqs[i]<pct)i++;return ages[i];}
+      const Q1=readQ(25),Q2=readQ(50),Q3=readQ(75);
+      const graphEl=drawSumkurve(ages,cumFreqs,{Q1,Q2,Q3});
+      return{type:"input",text:`Aflæs medianen (Q2) fra sumkurven nedenfor.`,graph:graphEl,answer:String(Q2),accept:[String(Q2),Q2+" år"],explanation:`Medianen aflæses ved 50% på y-aksen. Q2 ≈ ${Q2}.`};
+    },
+    ()=>{
+      const n=rnd(20,50),vals=[1,2,3,4,5,6],hyps=Array.from({length:6},()=>rnd(1,Math.floor(n/3)));
+      const tot=hyps.reduce((a,b)=>a+b,0);
+      const graphEl=drawPinde(vals,hyps);
+      const typIdx=hyps.indexOf(Math.max(...hyps));
+      return{type:"input",text:`Aflæs typetallet fra pindediagrammet.`,graph:graphEl,answer:String(vals[typIdx]),accept:[String(vals[typIdx])],explanation:`Den højeste pind er ved ${vals[typIdx]}, som er typetallet.`};
+    },
+    ()=>{const total=rnd(20,50),hyp=rnd(3,total-3),freq=Math.round(hyp/total*100)/100;return{type:"input",text:`${hyp} ud af ${total} observationer falder i en kategori. Hvad er den relative frekvens? (2 decimaler)`,answer:fmt(freq),accept:[fmt(freq),String(freq)],explanation:`${hyp} / ${total} = ${fmt(freq)}`};},
   ],
   F7:[
-    {type:"mc",text:"En terning kastes. Hvad er sandsynligheden for at få 6?",options:["1/6","1/3","1/2","2/6"],correct:0},
-    {type:"input",text:"X ~ b(n=10, p=0,5). Hvad er middelværdien?",answer:"5",accept:["5","5,0","5.0"]},
-    {type:"mc",text:"Hvad betyder X ~ b(n=5, p=0,3)?",options:["Normalfordeling med μ=5","Binomialfordeling med 5 forsøg og p=0,3","5 mulige udfald med total sandsynlighed 0,3","Uniform fordeling"],correct:1},
-    {type:"mc",text:"Hvad er P(X ≥ 1) hvis P(X = 0) = 0,4?",options:["0,4","0,6","0,2","1"],correct:1},
-    {type:"input",text:"Pose med 3 røde og 2 blå kugler. Hvad er P(rød) som decimal?",answer:"0,6",accept:["0,6","0.6","3/5","60%"]},
+    ()=>{const total=rnd(4,10),fav=rnd(1,total-1),p=Math.round(fav/total*100)/100;return{type:"input",text:`En pose med ${total} kugler, heraf ${fav} røde. P(rød) som decimal? (2 decimaler)`,answer:fmt(p),accept:[fmt(p),String(p),fav+"/"+total],explanation:`P(rød) = ${fav}/${total} = ${fmt(p)}`};},
+    ()=>{const n=rnd(5,20),p=rnd(1,9)/10,mu=Math.round(n*p*10)/10;return{type:"input",text:`X ~ b(n=${n}, p=${fmt(p)}). Hvad er middelværdien μ?`,answer:fmt(mu),accept:[fmt(mu),String(mu)],explanation:`μ = n·p = ${n}·${fmt(p)} = ${fmt(mu)}`};},
+    ()=>{
+      const n=rnd(10,20),p=rnd(1,4)/10;
+      const graphEl=drawBinom(n,p);
+      function C(n,k){return fak(n)/(fak(k)*fak(n-k));}
+      const k=rnd(0,3);
+      const pk=Math.round(C(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k)*100)/100;
+      return{type:"input",text:`Binomialfordelingen har n=${n} og p=${fmt(p)}. Hvad er ca. sandsynligheden for præcis ${k} succeser? (aflæs fra diagrammet, 2 decimaler)`,graph:graphEl,answer:fmt(pk),accept:[fmt(pk),String(pk),fmt(Math.round(pk*10)/10)],explanation:`P(X=${k}) = C(${n},${k})·${fmt(p)}^${k}·${fmt(1-p)}^${n-k} ≈ ${fmt(pk)}`};
+    },
+    ()=>{const r=rnd(1,5),b=rnd(1,5),tot=r+b,pR=Math.round(r/tot*100)/100;return{type:"mc",text:`Pose med ${r} røde og ${b} blå kugler. Hvad er P(rød)?`,options:[fmt(pR),fmt(Math.round(b/tot*100)/100),fmt(Math.round(r/b*100)/100),"1"],correct:0,explanation:`P(rød) = ${r}/${tot} = ${fmt(pR)}`};},
+    ()=>{const n=rnd(5,10),k=rnd(2,Math.min(4,n-1)),C=fak(n)/(fak(k)*fak(n-k));return{type:"input",text:`Hvor mange måder kan man vælge ${k} ud af ${n} personer, når rækkefølgen ikke betyder noget?`,answer:String(C),accept:[String(C)],explanation:`K(${n},${k}) = ${n}!/(${k}!·${n-k}!) = ${C}`};},
+    ()=>{const n=rnd(3,10),p=rnd(1,5)/10;return{type:"mc",text:`Hvad angiver notationen X ~ b(n=${n}, p=${fmt(p)})?`,options:[`Binomialfordeling med ${n} forsøg og sandsynlighed ${fmt(p)} for succes`,`Normalfordeling med μ=${n}`,`Poissonfordeling med λ=${n}`,"Uniform fordeling"],correct:0,explanation:`b(n,p) angiver en binomialfordeling med n=${n} forsøg og p=${fmt(p)}.`};},
   ],
   F8:[
-    {type:"mc",text:"I en χ²-test er p = 0,03 og α = 0,05. Hvad konkluderes?",options:["Accepter H₀","Forkast H₀","Testen er ugyldig","Ingen konklusion"],correct:1},
-    {type:"mc",text:"Hvad er nulhypotesen i en uafhængighedstest?",options:["Der er sammenhæng","Der er ingen sammenhæng","Middelværdierne er ens","Varianserne er ens"],correct:1},
-    {type:"input",text:"p̂ = 0,4 og SE = 0,05. Hvad er den øvre grænse for et 95% KI? (brug 1,96)",answer:"0,498",accept:["0,498","0.498","0,50","0.50"]},
-    {type:"mc",text:"Hvad er frihedsgrader for en 3×4 krydstabel?",options:["12","6","7","3"],correct:1},
-    {type:"mc",text:"Hvad er signifikansniveauet α typisk sat til?",options:["0,5","0,1","0,05","0,01"],correct:2},
+    ()=>{const alpha=Math.random()>0.5?0.05:0.01,reject=Math.random()>0.5,p=reject?rndF(0.001,alpha-0.001,3):rndF(alpha+0.001,0.2,3);return{type:"mc",text:`χ²-test: p = ${fmt(p)}, α = ${fmt(alpha)}. Hvad konkluderes?`,options:["Forkast H₀ — statistisk signifikant sammenhæng","Accepter H₀ — ingen statistisk signifikant sammenhæng"],correct:reject?0:1,explanation:`p ${reject?'<':'>'} α → ${reject?"forkast H₀":"accepter H₀"}.`};},
+    ()=>{const phat=rndF(0.2,0.8,2),se=rndF(0.02,0.07,3),upper=Math.round((phat+1.96*se)*1000)/1000;return{type:"input",text:`p̂ = ${fmt(phat)}, SE = ${fmt(se)}. Øvre grænse for 95% KI? (3 decimaler)`,answer:fmt(upper),accept:[fmt(upper),String(upper)],explanation:`${fmt(phat)} + 1,96·${fmt(se)} = ${fmt(upper)}`};},
+    ()=>{const phat=rndF(0.2,0.8,2),se=rndF(0.02,0.07,3),lower=Math.round((phat-1.96*se)*1000)/1000;return{type:"input",text:`p̂ = ${fmt(phat)}, SE = ${fmt(se)}. Nedre grænse for 95% KI? (3 decimaler)`,answer:fmt(lower),accept:[fmt(lower),String(lower)],explanation:`${fmt(phat)} − 1,96·${fmt(se)} = ${fmt(lower)}`};},
+    ()=>{const r=rnd(2,4),c=rnd(2,5),df=(r-1)*(c-1);return{type:"input",text:`Hvad er frihedsgrader for en ${r}×${c} krydstabel?`,answer:String(df),accept:[String(df)],explanation:`(${r}−1)·(${c}−1) = ${r-1}·${c-1} = ${df}`};},
+    ()=>{const r1=rnd(50,150),r2=rnd(50,150),tot=r1+r2,c1=rnd(30,Math.floor(tot*0.7)),e11=Math.round(r1*c1/tot*100)/100;return{type:"input",text:`Rækketotal=${r1}, kolonnetotal=${c1}, n=${tot}. Beregn forventet værdi E₁₁. (2 decimaler)`,answer:fmt(e11),accept:[fmt(e11),String(e11)],explanation:`E₁₁ = ${r1}·${c1}/${tot} = ${fmt(e11)}`};},
+    ()=>{return{type:"mc",text:`Hvad er nulhypotesen H₀ i en χ²-uafhængighedstest?`,options:["Der er ingen sammenhæng mellem de to variable","Der er sammenhæng","Middelværdierne er ens"],correct:0,explanation:`H₀: ingen sammenhæng. H₁: der er sammenhæng.`};},
   ],
 };
+
 let selected="F1",sessionQs=[],qIndex=0,correct=0,wrong=0,maxCount=5,answered=false;
+
 function init(){
   const grid=document.getElementById("forloeb-grid");
   Object.entries(FORLOEB).forEach(([key,name])=>{
@@ -174,31 +464,50 @@ function selectForloeb(key,btn){selected=key;document.querySelectorAll(".f-btn")
 function setCount(n,btn){maxCount=n;document.querySelectorAll("#count-btns .f-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
 function goHome(){show("screen-select");}
-function startQuiz(){
-  const pool=[...(QUESTIONS[selected]||[])];
-  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-  sessionQs=pool.slice(0,Math.min(maxCount,pool.length));
-  qIndex=0;correct=0;wrong=0;show("screen-quiz");renderQuestion();
+
+function generateQuestions(){
+  const gens=shuffle([...GENERATORS[selected]]);
+  const result=[];
+  let attempts=0;
+  while(result.length<maxCount&&attempts<maxCount*6){
+    attempts++;
+    const gen=gens[result.length%gens.length];
+    try{const q=gen();if(q)result.push(q);}catch(e){}
+  }
+  return result;
 }
+
+function startQuiz(){
+  sessionQs=generateQuestions();
+  qIndex=0;correct=0;wrong=0;
+  show("screen-quiz");renderQuestion();
+}
+
 function renderQuestion(){
   answered=false;
   const q=sessionQs[qIndex];
-  const pct=Math.round((qIndex/sessionQs.length)*100);
-  document.getElementById("progress-fill").style.width=pct+"%";
+  document.getElementById("progress-fill").style.width=Math.round(qIndex/sessionQs.length*100)+"%";
   document.getElementById("q-counter").textContent=(qIndex+1)+" / "+sessionQs.length;
   document.getElementById("q-forloeb").textContent=FORLOEB[selected];
   document.getElementById("q-type-label").textContent=q.type==="mc"?"Vælg det rigtige svar":"Skriv dit svar";
   document.getElementById("q-text").textContent=q.text;
   document.getElementById("feedback").className="feedback";
-  document.getElementById("feedback").textContent="";
   document.getElementById("next-btn").style.display="none";
+
+  const extra=document.getElementById("q-extra");
+  extra.innerHTML="";
+  if(q.graph){
+    const wrap=document.createElement("div");wrap.className="graph-wrap";
+    wrap.appendChild(q.graph);extra.appendChild(wrap);
+  }
+
   const mcDiv=document.getElementById("mc-options");
   const inputDiv=document.getElementById("input-area");
   if(q.type==="mc"){
     inputDiv.style.display="none";mcDiv.innerHTML="";
     q.options.forEach((opt,i)=>{
       const btn=document.createElement("button");btn.className="mc-option";btn.textContent=opt;
-      btn.onclick=()=>checkMC(i,btn);mcDiv.appendChild(btn);
+      btn.onclick=()=>checkMC(i,btn,q);mcDiv.appendChild(btn);
     });
   } else {
     mcDiv.innerHTML="";inputDiv.style.display="block";
@@ -206,34 +515,42 @@ function renderQuestion(){
     setTimeout(()=>inp.focus(),50);
   }
 }
-function checkMC(chosen,btn){
+
+function checkMC(chosen,btn,q){
   if(answered)return;answered=true;
-  const q=sessionQs[qIndex];
-  document.querySelectorAll(".mc-option").forEach(b=>b.onclick=null);
-  if(chosen===q.correct){btn.classList.add("correct");showFeedback(true,"Rigtigt!");correct++;}
-  else{btn.classList.add("wrong");document.querySelectorAll(".mc-option")[q.correct].classList.add("show-correct");showFeedback(false,"Forkert. Det rigtige svar er: "+q.options[q.correct]);wrong++;}
+  document.querySelectorAll(".mc-option").forEach(b=>{b.onclick=null;b.classList.add("disabled");});
+  if(chosen===q.correct){btn.classList.remove("disabled");btn.classList.add("correct");showFeedback(true,q.explanation);correct++;}
+  else{btn.classList.remove("disabled");btn.classList.add("wrong");document.querySelectorAll(".mc-option")[q.correct].classList.remove("disabled");document.querySelectorAll(".mc-option")[q.correct].classList.add("show-correct");showFeedback(false,"Forkert. "+q.explanation);wrong++;}
   document.getElementById("next-btn").style.display="block";
 }
+
 function checkInput(){
   if(answered)return;
   const q=sessionQs[qIndex];
-  const val=document.getElementById("answer-input").value.trim().replace(",",".");
-  const accepts=q.accept.map(a=>a.replace(",",".").toLowerCase());
-  const isCorrect=accepts.includes(val.toLowerCase());
+  const raw=document.getElementById("answer-input").value.trim();
+  const val=raw.replace(",",".");
+  const accepts=q.accept.map(a=>a.replace(",",".").toLowerCase().trim());
+  const ok=accepts.includes(val.toLowerCase());
   answered=true;document.getElementById("answer-input").disabled=true;
-  if(isCorrect){showFeedback(true,"Rigtigt!");correct++;}
-  else{showFeedback(false,"Forkert. Det rigtige svar er: "+q.answer);wrong++;}
+  if(ok){showFeedback(true,q.explanation);correct++;}
+  else{showFeedback(false,"Forkert — svaret er: "+q.answer+". "+q.explanation);wrong++;}
   document.getElementById("next-btn").style.display="block";
 }
-function showFeedback(ok,msg){const fb=document.getElementById("feedback");fb.className="feedback "+(ok?"correct":"wrong");fb.textContent=msg;}
-function nextQuestion(){qIndex++;if(qIndex>=sessionQs.length){showResult();}else{renderQuestion();}}
+
+function showFeedback(ok,msg){
+  const fb=document.getElementById("feedback");fb.className="feedback "+(ok?"correct":"wrong");fb.textContent=(ok?"Rigtigt! ":"")+msg;
+}
+
+function nextQuestion(){qIndex++;if(qIndex>=sessionQs.length)showResult();else renderQuestion();}
+
 function showResult(){
-  const total=correct+wrong;
+  const tot=correct+wrong;
   document.getElementById("res-correct").textContent=correct;
   document.getElementById("res-wrong").textContent=wrong;
-  document.getElementById("res-pct").textContent=Math.round((correct/total)*100)+"%";
+  document.getElementById("res-pct").textContent=Math.round(correct/tot*100)+"%";
   show("screen-result");
 }
+
 init();
 </script>
 </body>
