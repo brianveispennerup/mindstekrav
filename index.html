@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindstekrav — Matematiktræner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;padding:1.5rem;background:#f5f5f0;min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+.card{background:#fff;border:1px solid #e0e0d8;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.forloeb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:1rem}
+.f-btn{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.75rem 1rem;cursor:pointer;font-size:14px;font-weight:500;color:#222;text-align:left;transition:background 0.15s}
+.f-btn:hover{background:#f0f0ec}
+.f-btn.active{border:2px solid #185FA5;background:#E6F1FB;color:#0C447C}
+.q-label{font-size:12px;color:#666;margin-bottom:6px;font-weight:500}
+.q-text{font-size:16px;color:#111;line-height:1.6;margin-bottom:1.25rem}
+.mc-option{display:block;width:100%;text-align:left;background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1rem;margin-bottom:8px;cursor:pointer;font-size:15px;color:#222;transition:background 0.1s}
+.mc-option:hover{background:#f0f0ec}
+.mc-option.correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A}
+.mc-option.wrong{background:#FCEBEB;border:2px solid #A32D2D;color:#791F1F}
+.mc-option.show-correct{background:#EAF3DE;border:2px solid #3B6D11;color:#27500A}
+.input-row{display:flex;gap:8px;align-items:center;margin-bottom:1rem}
+.input-row input{flex:1;padding:0.5rem 0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px}
+.feedback{border-radius:8px;padding:0.75rem 1rem;font-size:14px;margin-bottom:1rem;display:none}
+.feedback.correct{background:#EAF3DE;color:#27500A;display:block}
+.feedback.wrong{background:#FCEBEB;color:#791F1F;display:block}
+.score-row{display:flex;gap:12px;margin-bottom:1rem}
+.score-box{background:#f5f5f0;border-radius:8px;padding:0.75rem 1rem;flex:1;text-align:center}
+.score-box .num{font-size:24px;font-weight:500;color:#111}
+.score-box .lbl{font-size:12px;color:#666}
+button.primary{background:#fff;border:1px solid #ccc;border-radius:8px;padding:0.6rem 1.2rem;font-size:14px;cursor:pointer;color:#222}
+button.primary:hover{background:#f0f0ec}
+.progress-bar{height:4px;background:#e0e0d8;border-radius:2px;margin-bottom:1.25rem}
+.progress-fill{height:4px;background:#185FA5;border-radius:2px;transition:width 0.3s}
+</style>
+</head>
+<body>
+
+<div id="screen-select" class="screen active">
+  <div class="card">
+    <p style="font-size:18px;font-weight:500;margin-bottom:4px">Mindstekrav — matematiktræner</p>
+    <p style="font-size:14px;color:#666;margin-bottom:1rem">Vælg et forløb og start træning</p>
+    <div class="forloeb-grid" id="forloeb-grid"></div>
+  </div>
+  <div class="card">
+    <p style="font-size:13px;color:#666;margin-bottom:8px">Antal opgaver per session</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="count-btns">
+      <button class="f-btn active" onclick="setCount(5,this)">5</button>
+      <button class="f-btn" onclick="setCount(10,this)">10</button>
+      <button class="f-btn" onclick="setCount(999,this)">Alle</button>
+    </div>
+  </div>
+  <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.75rem">Start træning</button>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="q-label" id="q-forloeb"></span>
+      <span style="font-size:12px;color:#666" id="q-counter"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <p class="q-label" id="q-type-label"></p>
+    <p class="q-text" id="q-text"></p>
+    <div id="mc-options"></div>
+    <div id="input-area" style="display:none">
+      <div class="input-row">
+        <input type="text" id="answer-input" placeholder="Skriv dit svar..." onkeydown="if(event.key==='Enter')checkInput()">
+        <button class="primary" onclick="checkInput()">Tjek</button>
+      </div>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div style="display:flex;gap:8px">
+      <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
+      <button class="primary" onclick="goHome()" style="font-size:13px;color:#666">Afslut</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-result" class="screen">
+  <div class="card">
+    <p style="font-size:18px;font-weight:500;margin-bottom:1rem">Resultat</p>
+    <div class="score-row">
+      <div class="score-box"><div class="num" id="res-correct">0</div><div class="lbl">Rigtige</div></div>
+      <div class="score-box"><div class="num" id="res-wrong">0</div><div class="lbl">Forkerte</div></div>
+      <div class="score-box"><div class="num" id="res-pct">0%</div><div class="lbl">Score</div></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="primary" onclick="startQuiz()" style="flex:1">Prøv igen</button>
+      <button class="primary" onclick="goHome()" style="flex:1">Vælg forløb</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FORLOEB = {
+  F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",
+  F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",
+  F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"
+};
+const QUESTIONS = {
+  F1:[
+    {type:"mc",text:"En lineær funktion har forskriften f(x) = 3x + 2. Hvad er hældningskoefficienten?",options:["2","3","5","−3"],correct:1},
+    {type:"mc",text:"Hvad er nulpunktet for f(x) = 2x − 6?",options:["x = 6","x = 3","x = −3","x = 2"],correct:1},
+    {type:"input",text:"Bestem værdien af f(4), når f(x) = 5x − 3.",answer:"17",accept:["17"]},
+    {type:"mc",text:"En lineær funktion går gennem (0, 4) og (2, 8). Hvad er forskriften?",options:["f(x) = 2x + 4","f(x) = 4x + 2","f(x) = 2x − 4","f(x) = x + 4"],correct:0},
+    {type:"input",text:"Bestem skæringen med y-aksen for f(x) = −2x + 7.",answer:"7",accept:["7"]},
+    {type:"mc",text:"Hvad er den omvendte funktion til f(x) = 4x + 8?",options:["f⁻¹(x) = (x−8)/4","f⁻¹(x) = 4x−8","f⁻¹(x) = x/4 + 8","f⁻¹(x) = (x+8)/4"],correct:0},
+    {type:"input",text:"En taxa koster 35 kr i startgebyr og 12 kr/km. Hvad koster en tur på 5 km?",answer:"95",accept:["95","95 kr"]},
+  ],
+  F2:[
+    {type:"mc",text:"En eksponentiel funktion f(x) = 3 · 1,5ˣ. Hvad er begyndelsesværdien?",options:["1,5","3","4,5","0"],correct:1},
+    {type:"mc",text:"Hvilken funktion er aftagende?",options:["f(x) = 2 · 1,3ˣ","f(x) = 5 · 0,8ˣ","f(x) = 1 · 1,0ˣ","f(x) = 4 · 2ˣ"],correct:1},
+    {type:"input",text:"Hvad er vækstraten (i %) for f(x) = 10 · 1,04ˣ?",answer:"4",accept:["4","4%","4 %"]},
+    {type:"mc",text:"Hvad forstås ved en halveringskonstant T½?",options:["Den x-værdi hvor funktionen er halveret","Den tid det tager at vokse til det dobbelte","Startværdien divideret med 2","Hældningen halveret"],correct:0},
+    {type:"input",text:"Bestem f(0) for f(x) = 250 · 0,92ˣ.",answer:"250",accept:["250"]},
+  ],
+  F3:[
+    {type:"mc",text:"Hvad er diskriminanten for f(x) = x² + 4x + 4?",options:["0","8","16","−4"],correct:0},
+    {type:"mc",text:"Diskriminanten er positiv. Hvad betyder det for nulpunkterne?",options:["Ingen nulpunkter","Præcis ét nulpunkt","To nulpunkter","Funktionen er konstant"],correct:2},
+    {type:"input",text:"Hvad er x-koordinaten til toppunktet for f(x) = x² − 6x + 11?",answer:"3",accept:["3","x=3","x = 3"]},
+    {type:"mc",text:"Hvad er minimumspunktet for f(x) = x² + 4x + 1?",options:["(−2, −3)","(2, 13)","(0, 1)","(−4, 1)"],correct:0},
+    {type:"input",text:"Bestem det mindste nulpunkt for f(x) = x² − 5x + 6.",answer:"2",accept:["2","x=2"]},
+  ],
+  F4:[
+    {type:"mc",text:"Hvad er den afledede af f(x) = 3x² + 2x?",options:["6x + 2","3x + 2","6x","3x²"],correct:0},
+    {type:"input",text:"Bestem f'(2) for f(x) = x³ − 3x.",answer:"9",accept:["9"]},
+    {type:"mc",text:"Hvad siger f'(x) > 0 om funktionen f?",options:["f er aftagende","f er voksende","f har et maksimum","f er konstant"],correct:1},
+    {type:"mc",text:"Hvad er den afledede af f(x) = 5x?",options:["5x","5","0","x"],correct:1},
+    {type:"input",text:"Bestem f'(1) for f(x) = 2x² − 4x + 1.",answer:"-2",accept:["-2","−2"]},
+  ],
+  F5:[
+    {type:"mc",text:"Hvad forstås ved en annuitet?",options:["Et lån med variabel ydelse","Et lån med fast periodisk ydelse","En opsparingskonto","En rente uden afdrag"],correct:1},
+    {type:"input",text:"Hvad er den månedlige rente (i %), når den årlige rente er 12%?",answer:"1",accept:["1","1%","1 %"]},
+    {type:"mc",text:"Hvad er den effektive årlige rente ved 1% månedlig rente?",options:["12%","12,68%","12,5%","11%"],correct:1},
+    {type:"input",text:"Bestem f(0) for f(x) = 250 · 0,92ˣ.",answer:"250",accept:["250"]},
+    {type:"mc",text:"Hvad sker der med en annuitetsydelse hvis renten stiger?",options:["Ydelsen falder","Ydelsen stiger","Ydelsen er uændret","Lånet afdrages hurtigere"],correct:1},
+  ],
+  F6:[
+    {type:"mc",text:"Hvad er medianen i datasættet: 3, 5, 7, 9, 11?",options:["5","7","9","6"],correct:1},
+    {type:"input",text:"Hvad er gennemsnittet af: 4, 6, 8, 10?",answer:"7",accept:["7"]},
+    {type:"mc",text:"Hvad viser et boksplot?",options:["Gennemsnit og varians","Kvartilsæt og outliers","Frekvenser","Standardafvigelse"],correct:1},
+    {type:"mc",text:"Datasættet: 2, 4, 4, 4, 5, 5, 7, 9. Hvad er typetallet?",options:["4","5","2","7"],correct:0},
+    {type:"input",text:"Hvad er variationsbredden for: 3, 7, 12, 1, 9?",answer:"11",accept:["11"]},
+  ],
+  F7:[
+    {type:"mc",text:"En terning kastes. Hvad er sandsynligheden for at få 6?",options:["1/6","1/3","1/2","2/6"],correct:0},
+    {type:"input",text:"X ~ b(n=10, p=0,5). Hvad er middelværdien?",answer:"5",accept:["5","5,0","5.0"]},
+    {type:"mc",text:"Hvad betyder X ~ b(n=5, p=0,3)?",options:["Normalfordeling med μ=5","Binomialfordeling med 5 forsøg og p=0,3","5 mulige udfald med total sandsynlighed 0,3","Uniform fordeling"],correct:1},
+    {type:"mc",text:"Hvad er P(X ≥ 1) hvis P(X = 0) = 0,4?",options:["0,4","0,6","0,2","1"],correct:1},
+    {type:"input",text:"Pose med 3 røde og 2 blå kugler. Hvad er P(rød) som decimal?",answer:"0,6",accept:["0,6","0.6","3/5","60%"]},
+  ],
+  F8:[
+    {type:"mc",text:"I en χ²-test er p = 0,03 og α = 0,05. Hvad konkluderes?",options:["Accepter H₀","Forkast H₀","Testen er ugyldig","Ingen konklusion"],correct:1},
+    {type:"mc",text:"Hvad er nulhypotesen i en uafhængighedstest?",options:["Der er sammenhæng","Der er ingen sammenhæng","Middelværdierne er ens","Varianserne er ens"],correct:1},
+    {type:"input",text:"p̂ = 0,4 og SE = 0,05. Hvad er den øvre grænse for et 95% KI? (brug 1,96)",answer:"0,498",accept:["0,498","0.498","0,50","0.50"]},
+    {type:"mc",text:"Hvad er frihedsgrader for en 3×4 krydstabel?",options:["12","6","7","3"],correct:1},
+    {type:"mc",text:"Hvad er signifikansniveauet α typisk sat til?",options:["0,5","0,1","0,05","0,01"],correct:2},
+  ],
+};
+let selected="F1",sessionQs=[],qIndex=0,correct=0,wrong=0,maxCount=5,answered=false;
+function init(){
+  const grid=document.getElementById("forloeb-grid");
+  Object.entries(FORLOEB).forEach(([key,name])=>{
+    const btn=document.createElement("button");
+    btn.className="f-btn"+(key===selected?" active":"");
+    btn.innerHTML=`<span style="font-size:11px;color:#666">${key}</span><br>${name}`;
+    btn.onclick=()=>selectForloeb(key,btn);
+    grid.appendChild(btn);
+  });
+}
+function selectForloeb(key,btn){selected=key;document.querySelectorAll(".f-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
+function setCount(n,btn){maxCount=n;document.querySelectorAll("#count-btns .f-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
+function goHome(){show("screen-select");}
+function startQuiz(){
+  const pool=[...(QUESTIONS[selected]||[])];
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  sessionQs=pool.slice(0,Math.min(maxCount,pool.length));
+  qIndex=0;correct=0;wrong=0;show("screen-quiz");renderQuestion();
+}
+function renderQuestion(){
+  answered=false;
+  const q=sessionQs[qIndex];
+  const pct=Math.round((qIndex/sessionQs.length)*100);
+  document.getElementById("progress-fill").style.width=pct+"%";
+  document.getElementById("q-counter").textContent=(qIndex+1)+" / "+sessionQs.length;
+  document.getElementById("q-forloeb").textContent=FORLOEB[selected];
+  document.getElementById("q-type-label").textContent=q.type==="mc"?"Vælg det rigtige svar":"Skriv dit svar";
+  document.getElementById("q-text").textContent=q.text;
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("feedback").textContent="";
+  document.getElementById("next-btn").style.display="none";
+  const mcDiv=document.getElementById("mc-options");
+  const inputDiv=document.getElementById("input-area");
+  if(q.type==="mc"){
+    inputDiv.style.display="none";mcDiv.innerHTML="";
+    q.options.forEach((opt,i)=>{
+      const btn=document.createElement("button");btn.className="mc-option";btn.textContent=opt;
+      btn.onclick=()=>checkMC(i,btn);mcDiv.appendChild(btn);
+    });
+  } else {
+    mcDiv.innerHTML="";inputDiv.style.display="block";
+    const inp=document.getElementById("answer-input");inp.value="";inp.disabled=false;
+    setTimeout(()=>inp.focus(),50);
+  }
+}
+function checkMC(chosen,btn){
+  if(answered)return;answered=true;
+  const q=sessionQs[qIndex];
+  document.querySelectorAll(".mc-option").forEach(b=>b.onclick=null);
+  if(chosen===q.correct){btn.classList.add("correct");showFeedback(true,"Rigtigt!");correct++;}
+  else{btn.classList.add("wrong");document.querySelectorAll(".mc-option")[q.correct].classList.add("show-correct");showFeedback(false,"Forkert. Det rigtige svar er: "+q.options[q.correct]);wrong++;}
+  document.getElementById("next-btn").style.display="block";
+}
+function checkInput(){
+  if(answered)return;
+  const q=sessionQs[qIndex];
+  const val=document.getElementById("answer-input").value.trim().replace(",",".");
+  const accepts=q.accept.map(a=>a.replace(",",".").toLowerCase());
+  const isCorrect=accepts.includes(val.toLowerCase());
+  answered=true;document.getElementById("answer-input").disabled=true;
+  if(isCorrect){showFeedback(true,"Rigtigt!");correct++;}
+  else{showFeedback(false,"Forkert. Det rigtige svar er: "+q.answer);wrong++;}
+  document.getElementById("next-btn").style.display="block";
+}
+function showFeedback(ok,msg){const fb=document.getElementById("feedback");fb.className="feedback "+(ok?"correct":"wrong");fb.textContent=msg;}
+function nextQuestion(){qIndex++;if(qIndex>=sessionQs.length){showResult();}else{renderQuestion();}}
+function showResult(){
+  const total=correct+wrong;
+  document.getElementById("res-correct").textContent=correct;
+  document.getElementById("res-wrong").textContent=wrong;
+  document.getElementById("res-pct").textContent=Math.round((correct/total)*100)+"%";
+  show("screen-result");
+}
+init();
+</script>
+</body>
+</html>
