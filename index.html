@@ -55,9 +55,11 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <button class="f-btn active" onclick="setCount(5,this)">5</button>
       <button class="f-btn" onclick="setCount(10,this)">10</button>
       <button class="f-btn" onclick="setCount(15,this)">15</button>
+      <button class="f-btn" onclick="setCount(999,this)">Alle</button>
     </div>
   </div>
   <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.8rem;font-size:15px">Start træning</button>
+  <button class="primary" onclick="startAllForloeb()" style="width:100%;padding:0.8rem;font-size:15px;margin-top:8px;border-color:#185FA5;color:#185FA5">Gennemgå alle forløb (overblik)</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -381,6 +383,26 @@ const GENERATORS={
 
 let selected="F1",sessionQs=[],qIndex=0,correct=0,wrong=0,maxCount=5,answered=false;
 
+function startAllForloeb(){
+  // Pick 2 questions from each forloeb = 16 questions total overview
+  const perForloeb = maxCount <= 5 ? 1 : maxCount <= 10 ? 1 : 2;
+  sessionQs = [];
+  Object.keys(FORLOEB).forEach(key => {
+    const gens = shuffle([...GENERATORS[key]]);
+    let added = 0, attempts = 0;
+    while(added < perForloeb && attempts < perForloeb * 6){
+      attempts++;
+      try{
+        const q = gens[added % gens.length]();
+        if(q){ q._forloeb = key; sessionQs.push(q); added++; }
+      }catch(e){}
+    }
+  });
+  sessionQs = shuffle(sessionQs);
+  qIndex=0; correct=0; wrong=0;
+  show("screen-quiz"); renderQuestion();
+}
+
 function init(){
   const grid=document.getElementById("forloeb-grid");
   Object.entries(FORLOEB).forEach(([key,name])=>{
@@ -414,7 +436,7 @@ function renderQuestion(){
   const q=sessionQs[qIndex];
   document.getElementById("progress-fill").style.width=Math.round(qIndex/sessionQs.length*100)+"%";
   document.getElementById("q-counter").textContent=(qIndex+1)+" / "+sessionQs.length;
-  document.getElementById("q-forloeb").textContent=FORLOEB[selected];
+  document.getElementById("q-forloeb").textContent=FORLOEB[q._forloeb||selected];
   document.getElementById("q-type-label").textContent=q.type==="mc"?"Vælg det rigtige svar":"Skriv dit svar";
   document.getElementById("q-text").textContent=q.text;
   document.getElementById("feedback").className="feedback";
