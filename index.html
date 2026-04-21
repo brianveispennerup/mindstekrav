@@ -103,7 +103,13 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 </div>
 
 <script>
-const FORLOEB={F0:"Grundlæggende færdigheder",F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"};
+const FORLOEB={
+  F0:"Grundlæggende færdigheder",
+  F1:"Lineære funktioner",
+  F2:"Eksponentielle funktioner",
+  F3:"Deskriptiv statistik",
+  F4:"Finansiel regning"
+};
 
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d));}
@@ -124,31 +130,14 @@ const PLOTLY_LAYOUT_BASE={
   height:280
 };
 
-function makePlotSpec(traces, layout){
-  return {traces, layout};
-}
+function makePlotSpec(traces,layout){return{traces,layout};}
 
-function plotLines(traces, xrange, yrange){
+function plotLines(traces,xrange,yrange){
   const layout=Object.assign({},PLOTLY_LAYOUT_BASE,{
     xaxis:Object.assign({},PLOTLY_LAYOUT_BASE.xaxis,{range:xrange}),
     yaxis:Object.assign({},PLOTLY_LAYOUT_BASE.yaxis,{range:yrange})
   });
-  return makePlotSpec(traces, layout);
-}
-
-function renderGraph(spec){
-  const wrap=document.createElement('div');
-  wrap.className='plot-wrap';
-  const id='plot_'+Date.now()+'_'+Math.floor(Math.random()*10000);
-  const div=document.createElement('div');
-  div.id=id;
-  wrap.appendChild(div);
-  setTimeout(()=>{
-    if(document.getElementById(id)){
-      Plotly.newPlot(id, spec.traces, spec.layout, PLOTLY_CONFIG);
-    }
-  }, 200);
-  return wrap;
+  return makePlotSpec(traces,layout);
 }
 
 function makeFuncTrace(fn,xMin,xMax,color,name,dash){
@@ -167,32 +156,57 @@ function makeScatterTrace(xs,ys,color,size){
 // ---- QUESTION GENERATORS ----
 const GENERATORS={
   F0:[
-    // Løs ligning x² + k = c
-    ()=>{const k=rnd(1,10),c=rnd(k+1,k+20),x=Math.round(Math.sqrt(c-k));if(x*x!==c-k)return GENERATORS.F0[0]();return{type:"input",text:`Løs ligningen x² ${k>0?'+ '+k:'− '+Math.abs(k)} = ${c}.`,answer:String(x),accept:[String(x),String(-x),"x="+x,"±"+x],explanation:`x² = ${c-k} → x = ±√${c-k} = ±${x}`};},
-    // Reducér udtryk med parenteser
-    ()=>{const a=rnd(2,5),bx=rnd(1,6),by=rnd(1,6),c=rnd(2,5),dx=rnd(1,6),dy=rnd(1,6);const rx=a*bx-c*dx,ry=a*by-c*dy;const rxStr=rx===0?"":rx>0?`${rx}x`:`${rx}x`,ryStr=ry===0?"":ry>0?`+ ${ry}y`:`− ${Math.abs(ry)}y`;const ans=rx===0?`${ry}y`:ry===0?`${rx}x`:`${rx}x ${ry>=0?'+ '+ry:'− '+Math.abs(ry)}y`;return{type:"input",text:`Reducér: ${a}(${bx}x + ${by}y) − ${c}(${dx}x + ${dy}y)`,answer:ans,accept:[ans,ans.replace(' ','')],explanation:`= ${a*bx}x + ${a*by}y − ${c*dx}x − ${c*dy}y = ${ans}`};},
-    // Løs eksponentiel ligning a·bˣ = c
-    ()=>{const base=rnd(2,5),exp=rnd(2,4),bv=rnd(1,4),rhs=bv*Math.pow(base,exp);return{type:"input",text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,answer:String(exp),accept:[String(exp),"x="+exp,"x = "+exp],explanation:`${bv} · ${base}ˣ = ${rhs} → ${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`};},
-    // Potensregneregler
-    ()=>{const a=rnd(2,6),m=rnd(2,5),n=rnd(2,4);const ans=m+n;return{type:"input",text:`Beregn: ${a}^${m} · ${a}^${n} = ${a}^?`,answer:String(ans),accept:[String(ans)],explanation:`${a}^${m} · ${a}^${n} = ${a}^(${m}+${n}) = ${a}^${ans}`};},
-    // Reducér med kvadrat på toleddet
-    ()=>{const a=rnd(1,5),b=rnd(1,5);const r1=a*a,r2=2*a*b,r3=b*b;return{type:"input",text:`Hvad er (${a}x + ${b})²? Skriv koefficienten foran x².`,answer:String(r1),accept:[String(r1)],explanation:`(${a}x + ${b})² = ${r1}x² + ${r2}x + ${r3}. Koefficienten foran x² er ${r1}.`};},
-    // Brøk med fakultet
-    ()=>{function fak(n){return n<=1?1:n*fak(n-1);}const n=rnd(4,7),k=rnd(1,3);const ans=Array.from({length:k},(_,i)=>n-i).reduce((a,b)=>a*b,1);return{type:"input",text:`Beregn ${n}! / ${n-k}!`,answer:String(ans),accept:[String(ans)],explanation:`${n}!/${(n-k)}! = ${Array.from({length:k},(_,i)=>n-i).join(' · ')} = ${ans}`};},
+    // 1. Løs ligning x² + k = c
+    ()=>{
+      const k=rnd(1,10),c=rnd(k+1,k+20),x=Math.round(Math.sqrt(c-k));
+      if(x*x!==c-k)return GENERATORS.F0[0]();
+      return{type:"input",
+        text:`Løs ligningen x² + ${k} = ${c}.`,
+        answer:String(x),
+        accept:[String(x),String(-x),"x="+x,"±"+x],
+        explanation:`x² = ${c-k} → x = ±√${c-k} = ±${x}`
+      };
+    },
+    // 2. Reducér udtryk a(bx - cy) - (dx - ey)
+    ()=>{
+      const a=rnd(2,5),bx=rnd(1,6),by=rnd(1,6),c=rnd(2,5),dx=rnd(1,6),dy=rnd(1,6);
+      const rx=a*bx-c*dx, ry=a*by-c*dy;
+      const ans=(rx===0?"":rx+"x")+(ry===0?"":(ry>0?(rx===0?"":"+")+""+ry:""+ry)+"y");
+      const ansFull=(rx===0?"":rx+"x")+(ry===0?"":ry>=0?" + "+ry+"y":" − "+Math.abs(ry)+"y");
+      const ansClean=(rx===0?"":rx+"x")+(ry===0?"":ry>=0?`+ ${ry}y`:`− ${Math.abs(ry)}y`);
+      return{type:"input",
+        text:`Reducér følgende udtryk mest muligt: ${a}(${bx}x − ${by}y) − (${c*dx}x − ${c*dy}y)`,
+        answer:ansClean.trim(),
+        accept:[ansClean.trim(), rx+"x"+(ry>=0?"+"+ry:""+ry)+"y", String(rx)+"x"+(ry>=0?"+":"")+String(ry)+"y"],
+        explanation:`= ${a*bx}x − ${a*by}y − ${c*dx}x + ${c*dy}y = ${ansClean.trim()}`
+      };
+    },
+    // 3. Løs eksponentiel ligning a·bˣ = c
+    ()=>{
+      const base=rnd(2,5),exp=rnd(2,4),bv=rnd(1,4),rhs=bv*Math.pow(base,exp);
+      return{type:"input",
+        text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,
+        answer:String(exp),
+        accept:[String(exp),"x="+exp,"x = "+exp],
+        explanation:`${bv} · ${base}ˣ = ${rhs} → ${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`
+      };
+    },
   ],
+
   F1:[
-    // 1. Bestem forskriften gennem to punkter
+    // 1. Bestem forskriften fra to punkter
     ()=>{
       const a=rnd(-4,4)||1, b=rnd(-8,8);
       const x1=rnd(0,4), y1=a*x1+b, x2=x1+rnd(1,4), y2=a*x2+b;
+      const fStr=`f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}`;
       return{type:"input",
         text:`Bestem forskriften for den lineære funktion, hvis graf går gennem punkterne (x₁, y₁) = (${x1}, ${y1}) og (x₂, y₂) = (${x2}, ${y2}).`,
-        answer:`f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}`,
-        accept:[`${a}x${b>=0?'+'+b:''+b}`,`${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}`,String(b)+"_hældning_"+String(a)],
-        explanation:`a = (${y2}−${y1})/(${x2}−${x1}) = ${a}. b = ${y1}−${a}·${x1} = ${b}. Forskrift: f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`
+        answer:fStr,
+        accept:[fStr,`${a}x${b>=0?'+'+b:''+b}`,`${a}x ${b>=0?'+ '+b:'- '+Math.abs(b)}`],
+        explanation:`a = (${y2}−${y1})/(${x2}−${x1}) = ${a}. b = ${y1}−${a}·${x1} = ${b}. Forskrift: ${fStr}.`
       };
     },
-    // 2. Tegn graf + forklar a og b (MC)
+    // 2. Tegn graf + forklar a og b
     ()=>{
       const a=rnd(-4,4)||1, b=rnd(-8,8);
       const fn=x=>a*x+b;
@@ -202,7 +216,12 @@ const GENERATORS={
       return{type:"mc",
         text:`Grafen viser f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er den røde prikkes betydning?`,
         graph,
-        options:[`Det er skæringspunktet med y-aksen: (0, ${b})`,`Det er nulpunktet`,`Det er toppunktet`,`Det er hældningskoefficienten`],
+        options:[
+          `Det er skæringspunktet med y-aksen: (0, ${b})`,
+          `Det er nulpunktet`,
+          `Det er toppunktet`,
+          `Det er hældningskoefficienten`
+        ],
         correct:0,
         explanation:`Den røde prik er (0, ${b}) — skæringen med y-aksen, svarende til b = ${b}. Hældningen er a = ${a}.`
       };
@@ -219,78 +238,83 @@ const GENERATORS={
         explanation:`Sæt f(x) = 0: ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} = 0 → x = ${np}`
       };
     },
-    // 4. Aflæs definitionsmængde og værdimængde fra begrænset funktion
+    // 4. Aflæs definitionsmængde og værdimængde fra begrænset funktion (med graf)
     ()=>{
       const a=rnd(-3,3)||1, b=rnd(-5,5);
       const x1=rnd(-2,1), x2=x1+rnd(3,6);
       const y1=a*x1+b, y2=a*x2+b;
       const yMin=Math.min(y1,y2), yMax=Math.max(y1,y2);
-      const xMin2=Math.min(x1,x2), xMax2=Math.max(x1,x2);
-      const fn=x=>a*x+b;
       const t1={x:[x1,x2],y:[y1,y2],mode:'lines',line:{color:'#185FA5',width:2.5}};
       const tStart=makeScatterTrace([x1],[y1],'#185FA5',10);
       const tEnd={x:[x2],y:[y2],mode:'markers',marker:{color:'#185FA5',size:10,symbol:'circle-open',line:{width:2,color:'#185FA5'}}};
       const graph=plotLines([t1,tStart,tEnd],[x1-2,x2+2],[yMin-2,yMax+2]);
-      const dm=`[${x1}; ${x2}]`, vm=a>0?`[${y1}; ${y2}]`:`[${y2}; ${y1}]`;
+      const dm=`[${x1}; ${x2}]`;
+      const vm=a>0?`[${y1}; ${y2}]`:`[${y2}; ${y1}]`;
       return{type:"mc",
         text:`Grafen viser en begrænset lineær funktion. Hvad er definitionsmængden?`,
         graph,
-        options:[dm, `[${y1}; ${y2}]`, `]${x1}; ${x2}[`, `[${x1-1}; ${x2+1}]`],
+        options:[dm,`[${y1}; ${y2}]`,`]${x1}; ${x2}[`,`[${x1-1}; ${x2+1}]`],
         correct:0,
         explanation:`Definitionsmængden aflæses på x-aksen: Dm = ${dm}. Værdimængden er Vm = ${vm}.`
       };
     },
-    // 5. Taxa - opskriv funktionsforskrift
+    // 5. Tekstopgave - opstil funktionsforskrift (taxa)
     ()=>{
       const s=rnd(20,60), p=rnd(8,20), k=rnd(3,15), t=s+p*k;
       return{type:"input",
-        text:`En taxa koster ${s} kr i startgebyr og ${p} kr/km. Opskriv en funktionsforskrift f(x) for den samlede pris. Hvad er f(${k})?`,
+        text:`En taxa koster ${s} kr. i startgebyr og ${p} kr./km. Opskriv en funktionsforskrift f(x) for den samlede pris som funktion af antal kørte kilometer. Hvad er f(${k})?`,
         answer:String(t),
-        accept:[String(t), t+" kr"],
-        explanation:`f(x) = ${p}x + ${s}. f(${k}) = ${p}·${k} + ${s} = ${p*k} + ${s} = ${t} kr.`
+        accept:[String(t),t+" kr",t+" kr."],
+        explanation:`f(x) = ${s} + ${p}x. f(${k}) = ${s} + ${p}·${k} = ${t} kr.`
       };
     },
-    // 6. Hældningskoefficient
-    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er hældningskoefficienten?`,answer:String(a),accept:[String(a)],explanation:`Hældningskoefficienten er a = ${a}.`};},
-    // 7. Omvendt funktion
-    ()=>{const a=rnd(1,5),b=rnd(-10,10);return{type:"mc",text:`Hvad er den omvendte funktion til f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}?`,options:[`f⁻¹(x) = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`,`f⁻¹(x) = ${a}x ${b>=0?'− '+b:'+ '+Math.abs(b)}`,`f⁻¹(x) = x / ${a}`,`f⁻¹(x) = (x${b>=0?' + '+b:' − '+Math.abs(b)}) / ${a}`],correct:0,explanation:`Byt om: x = ${a}y ${b>=0?'+ '+b:'− '+Math.abs(b)} → y = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`};},
-    // 8. Voksende/aftagende
-    ()=>{const a=rnd(-4,4)||1,b=rnd(-5,5);return{type:"mc",text:`Er f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} voksende eller aftagende?`,options:["Voksende","Aftagende"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → voksende":"negativ → aftagende"}.`};},
   ],
+
   F2:[
-    // 1. Begyndelsesværdi og vækstrate fra forskrift
+    // 1. Begyndelsesværdi og vækstrate fra f(x) = b·aˣ
     ()=>{
-      const b=rnd(2,100), r=rnd(2,25), a=parseFloat((1+r/100).toFixed(2));
-      return{type:"input",
-        text:`En eksponentiel funktion har forskriften f(x) = ${b} · ${fmt(a)}ˣ. Hvad er funktionens begyndelsesværdi og vækstrate? Skriv vækstraten i %.`,
-        answer:String(r),
-        accept:[String(r), r+"%", r+" %"],
-        explanation:`Begyndelsesværdi = ${b} (f(0) = ${b}·1 = ${b}). Vækstrate: a = ${fmt(a)} = 1 + r/100 → r = ${r}%.`
-      };
-    },
-    // 2. Identificer forskrift fra graf (3 valgmuligheder)
-    ()=>{
-      const rising=Math.random()>0.5, a=rising?rndF(1.2,1.8,2):rndF(0.4,0.8,2), b=rnd(2,6);
-      const a2=rising?rndF(0.4,0.8,2):rndF(1.2,1.8,2), b2=rnd(2,6);
-      const a3=rndF(1.02,1.1,2), b3=rnd(8,15);
-      const which=0;
-      const fn=x=>b*Math.pow(a,x);
-      const xMax=6;
-      const yMax=Math.max(fn(0),fn(xMax))*1.2, yMin=0;
-      const t1=makeFuncTrace(fn,-2,xMax,'#185FA5');
-      const graph=plotLines([t1],[-2,xMax],[yMin,yMax]);
-      const opts=[`f(x) = ${b} · ${fmt(a)}ˣ`,`g(x) = ${b2} · ${fmt(a2)}ˣ`,`h(x) = ${b3} · ${fmt(a3)}ˣ`];
+      const b=rnd(2,50), a=rndF(1.05,1.5,2);
       return{type:"mc",
-        text:`Bestem hvilken af de tre følgende forskrifter, der svarer til grafen.`,
-        graph,
-        options:opts,
+        text:`En eksponentiel funktion har følgende forskrift: f(x) = ${b} · ${fmt(a)}ˣ. Hvad er funktionens begyndelsesværdi og vækstrate?`,
+        options:[
+          `Begyndelsesværdi: ${b}, vækstrate: ${fmt(Math.round((a-1)*100))}%`,
+          `Begyndelsesværdi: ${fmt(a)}, vækstrate: ${b}%`,
+          `Begyndelsesværdi: ${b}, vækstrate: ${fmt(a)}`,
+          `Begyndelsesværdi: 1, vækstrate: ${fmt(a)}`
+        ],
         correct:0,
-        explanation:`Begyndelsesværdien er ${b} (aflæs y-aksen ved x=0) og funktionen er ${a>1?"voksende":"aftagende"} med a = ${fmt(a)}.`
+        explanation:`f(0) = ${b}·1 = ${b} er begyndelsesværdien. Vækstraten r = a − 1 = ${fmt(a)} − 1 = ${fmt(Math.round((a-1)*100))}%.`
       };
     },
-    // 3. Aflæs fordoblingskonstant fra graf
+    // 2. Identificér forskriften fra graf (3 muligheder)
     ()=>{
-      const a=rndF(1.2,1.8,2), b=rnd(1,4);
+      const b=rnd(2,8);
+      const rising=Math.random()>0.5;
+      const a=rising?rndF(1.1,1.6,2):rndF(0.5,0.9,2);
+      const fn=x=>b*Math.pow(a,x);
+      const xMax=rising?8:10, xMin=-3;
+      const t1=makeFuncTrace(fn,xMin,xMax,'#185FA5');
+      const yVals=linspace(xMin,xMax,100).map(fn);
+      const graph=plotLines([t1],[xMin,xMax],[0,Math.min(Math.max(...yVals)*1.1,40)]);
+      // Make two wrong options
+      const a2=rising?rndF(0.5,0.89,2):rndF(1.1,1.6,2); // wrong direction
+      const a3=rising?rndF(1.1,1.6,2):rndF(0.5,0.9,2);  // right direction wrong values
+      const b3=b+rnd(2,6);
+      return{type:"mc",
+        text:`Grafen for en eksponentiel funktion er tegnet i koordinatsystemet. Bestem hvilken af de 3 følgende forskrifter, der svarer til grafen.`,
+        graph,
+        options:[
+          `f(x) = ${b} · ${fmt(a)}ˣ`,
+          `g(x) = ${b} · ${fmt(a2)}ˣ`,
+          `h(x) = ${b3} · ${fmt(a3)}ˣ`
+        ],
+        correct:0,
+        explanation:`Begyndelsesværdien (x=0) er ${b}, og funktionen er ${rising?"voksende (a > 1)":"aftagende (a < 1)"}. Det passer på f(x) = ${b} · ${fmt(a)}ˣ.`
+      };
+    },
+    // 3. Aflæs fordoblingskonstanten fra graf
+    ()=>{
+      const b=rndF(1,4,1), a=rndF(1.15,1.5,2);
       const T=Math.round(Math.log(2)/Math.log(a)*10)/10;
       const xMax=Math.ceil(T*3.5);
       const fn=x=>b*Math.pow(a,x);
@@ -302,210 +326,79 @@ const GENERATORS={
         graph,
         answer:fmt(T),
         accept:[fmt(T),String(T)],
-        explanation:`Fordoblingskonstanten er den x-værdi hvor funktionen er fordoblet. T₂ = ${fmt(T)}.`
+        explanation:`Fordoblingskonstanten er den x-værdi hvor funktionen fordobles. T₂ = ${fmt(T)}.`
       };
     },
     // 4. Voksende eller aftagende - begrund
     ()=>{
-      const rising=Math.random()>0.5, a=rising?rndF(1.1,1.8,2):rndF(0.5,0.9,2), b=rnd(2,30);
+      const rising=Math.random()>0.5;
+      const a=rising?rndF(1.1,1.8,2):rndF(0.5,0.9,2);
+      const b=rnd(2,30);
       return{type:"mc",
-        text:`Lad f(x) = ${b} · ${fmt(a)}ˣ. Er funktionen voksende eller aftagende? Begrund dit svar.`,
+        text:`Lad f(x) = ${b} · ${fmt(a)}ˣ og g(x) = ${b} · ${fmt(rising?rndF(0.5,0.9,2):rndF(1.1,1.8,2))}ˣ. Hvilken af funktionerne er voksende, og hvilken er aftagende? Begrund dit svar.`,
         options:[
-          `${rising?"Voksende":"Aftagende"} — fordi a = ${fmt(a)} er ${a>1?"større end 1":"mindre end 1"}`,
-          `${rising?"Aftagende":"Voksende"} — fordi b = ${b} er positiv`,
-          `${rising?"Aftagende":"Voksende"} — fordi a = ${fmt(a)} er ${a>1?"større end 1":"mindre end 1"}`,
-          `Hverken voksende eller aftagende`
+          `f(x) er ${rising?"voksende":"aftagende"} fordi a = ${fmt(a)} er ${a>1?"større end 1":"mindre end 1"}`,
+          `f(x) er ${rising?"aftagende":"voksende"} fordi b = ${b} er positiv`,
+          `Begge funktioner er voksende`,
+          `Begge funktioner er aftagende`
         ],
         correct:0,
-        explanation:`a = ${fmt(a)} er ${a>1?"større end 1 → voksende":"mindre end 1 → aftagende"}.`
+        explanation:`Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende. a = ${fmt(a)} er ${a>1?"større end 1 → voksende":"mindre end 1 → aftagende"}.`
       };
     },
-    // 5. Løs eksponentiel ligning
-    ()=>{const base=rnd(2,4),exp=rnd(2,4),bv=rnd(1,3),rhs=bv*Math.pow(base,exp);return{type:"input",text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,answer:String(exp),accept:[String(exp),"x="+exp],explanation:`${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`};},
-    // 6. Begyndelsesværdi aflæs
-    ()=>{const b=rnd(2,50),a=rndF(0.85,1.5,2);return{type:"input",text:`f(x) = ${b} · ${fmt(a)}ˣ. Hvad er begyndelsesværdien?`,answer:String(b),accept:[String(b)],explanation:`f(0) = ${b} · 1 = ${b}`};},
   ],
+
   F3:[
-    ()=>{const a=rnd(1,3),b=rnd(-6,6),c=rnd(-5,5),d=b*b-4*a*c;return{type:"input",text:`Beregn diskriminanten for f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}.`,answer:String(d),accept:[String(d)],explanation:`d = b²−4ac = ${b*b}−${4*a*c} = ${d}`};},
+    // 1. Lav pindediagram - aflæs typetal
     ()=>{
-      const a=rnd(1,2)*(Math.random()>0.5?1:-1),xT=rnd(-4,4),b=-2*a*xT,c=rnd(-5,5);
-      const yT=a*xT*xT+b*xT+c;
-      const xMin=xT-5,xMax=xT+5;
-      const fn=x=>a*x*x+b*x+c;
-      const ys=linspace(xMin,xMax,200).map(fn);
-      const yMin=Math.min(...ys)-2,yMax=Math.max(...ys)+3;
-      const t1=makeFuncTrace(fn,xMin,xMax,'#185FA5');
-      const tTop=makeScatterTrace([xT],[yT],'#C0392B',10);
-      const graph=plotLines([t1,tTop],[xMin,xMax],[yMin,yMax]);
-      return{type:"input",text:`Aflæs x-koordinaten til toppunktet fra grafen.`,graph,answer:String(xT),accept:[String(xT),"x="+xT],explanation:`Toppunktet er ved x = ${xT}.`};
-    },
-    ()=>{
-      const a=rnd(1,2)*(Math.random()>0.5?1:-1),b=rnd(-4,4),c=rnd(-6,6);
-      const fn=x=>a*x*x+b*x+c;
-      const xs=linspace(-6,6,200),ys=xs.map(fn);
-      const yMin=Math.min(...ys)-2,yMax=Math.max(...ys)+2;
-      const t1=makeFuncTrace(fn,-6,6,'#185FA5');
-      const graph=plotLines([t1],[-6,6],[yMin,yMax]);
-      return{type:"mc",text:`Grafen viser et andengradspolynomium. Åbner parablen opad eller nedad?`,graph,options:["Opad (a > 0)","Nedad (a < 0)"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → åbner opad":"negativ → åbner nedad"}.`};
-    },
-    ()=>{const r1=rnd(-4,4),r2=rnd(-4,4),b=-(r1+r2),c=r1*r2,mn=Math.min(r1,r2);return{type:"input",text:`Bestem det mindste nulpunkt for f(x) = x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}.`,answer:String(mn),accept:[String(mn),"x="+mn],explanation:`Nulpunkterne er ${r1} og ${r2}. Mindste = ${mn}.`};},
-
-    // Angiv minimum med fortolkning
-    ()=>{const a=rnd(1,3),xT=rnd(-4,4),b=-2*a*xT,c=rnd(-5,5),yT=a*xT*xT+b*xT+c;return{type:"input",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}. Hvad er minimumsværdien?`,answer:String(yT),accept:[String(yT)],explanation:`Toppunktet er (${xT}, ${yT}). Da a = ${a} > 0 er det et minimum. Minimumsværdien er f(${xT}) = ${yT}.`};},
-    // Fortolk diskriminant
-    ()=>{const a=rnd(1,2),b=rnd(-6,6),c=rnd(-5,5),d=b*b-4*a*c;const nulpkt=d>0?"to nulpunkter":d===0?"præcis ét nulpunkt":"ingen nulpunkter";return{type:"mc",text:`For f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)} er diskriminanten d = ${d}. Hvad kan konkluderes?`,options:[`Funktionen har ${nulpkt}`,`Funktionen har ${d>0?"ingen":"to"} nulpunkter`,`Funktionen har altid to nulpunkter`,"Funktionen er konstant"],correct:0,explanation:`d = ${d} ${d>0?'> 0 → to nulpunkter':d===0?'= 0 → præcis ét nulpunkt':'< 0 → ingen nulpunkter'}.`};},
-    ()=>{const s=[{d:rnd(1,20),ans:0},{d:0,ans:1},{d:-rnd(1,10),ans:2}][rnd(0,2)];return{type:"mc",text:`Diskriminanten er d = ${s.d}. Hvad siges om nulpunkterne?`,options:["To nulpunkter","Præcis ét nulpunkt","Ingen nulpunkter"],correct:s.ans,explanation:["d > 0 → to","d = 0 → ét","d < 0 → ingen"][s.ans]+" nulpunkt(er)."};},
-  ],
-  F4:[
-    ()=>{const a=rnd(-4,4)||1,b=rnd(-5,5),dA=2*a;return{type:"input",text:`Koefficienten foran x i f'(x), når f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x?`,answer:String(dA),accept:[String(dA)],explanation:`f'(x) = ${dA}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`};},
-    ()=>{const a=rnd(-3,3)||1,b=rnd(-5,5),x0=rnd(-4,4),fpx=2*a*x0+b;return{type:"input",text:`Bestem f'(${x0}) for f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x.`,answer:String(fpx),accept:[String(fpx)],explanation:`f'(x) = ${2*a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} → f'(${x0}) = ${fpx}`};},
-    ()=>{
-      const a=rndF(0.3,0.8,1)*(Math.random()>0.5?1:-1),b=rndF(-2,2,1),c=rndF(-3,3,1);
-      const fn=x=>a*x*x*x+b*x*x+c*x;
-      const fp=x=>3*a*x*x+2*b*x+c;
-      const xs=linspace(-7,8,400);
-      const allY=[...xs.map(fn),...xs.map(fp)];
-      const yMin=Math.max(Math.min(...allY),-30),yMax=Math.min(Math.max(...allY),30);
-      const t1=makeFuncTrace(fn,-7,8,'#185FA5','f(x)');
-      const t2=makeFuncTrace(fp,-7,8,'#C0392B',"f'(x)");
-      t1.name="f(x)";t2.name="f'(x)";
-      const layout=Object.assign({},PLOTLY_LAYOUT_BASE,{
-        showlegend:true,legend:{x:0.02,y:0.98,bgcolor:'rgba(255,255,255,0.85)',bordercolor:'#ddd',borderwidth:1},
-        xaxis:Object.assign({},PLOTLY_LAYOUT_BASE.xaxis,{range:[-7,8]}),
-        yaxis:Object.assign({},PLOTLY_LAYOUT_BASE.yaxis,{range:[yMin,yMax]})
-      });
-      const graph=makePlotSpec([t1,t2],layout);
-      return{type:"mc",text:`Den blå kurve er f(x) og den røde er f'(x). Hvad gælder?`,graph,options:["Hvor f'(x) = 0, har f(x) et ekstremum","f'(x) og f(x) er ens overalt","f'(x) er altid positiv","f(x) har ingen nulpunkter"],correct:0,explanation:`Nulpunkterne for f'(x) svarer til ekstremumspunkter for f(x).`};
-    },
-    ()=>{const a=rnd(1,3)*(Math.random()>0.5?1:-1),xE=rnd(-4,4),b=-2*a*xE,c=rnd(-5,5);return{type:"mc",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}. Hvilken slags ekstremum i x = ${xE}?`,options:["Minimum","Maksimum"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → minimum":"negativ → maksimum"}.`};},
-
-    // Differentier og fortolk i ord
-    ()=>{const a=rnd(1,4),b=rnd(-5,5),x0=rnd(1,5),fpx=2*a*x0+b;return{type:"mc",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x. Hvad betyder f'(${x0}) = ${fpx}?`,options:[`Funktionens øjeblikkelige væksthastighed i x = ${x0} er ${fpx}`,`Funktionsværdien i x = ${x0} er ${fpx}`,`Funktionen har et nulpunkt i x = ${fpx}`,`Tangenten har skæring ${fpx} med y-aksen`],correct:0,explanation:`f'(${x0}) = ${fpx} er hældningen af tangenten i punktet x = ${x0} — altså den øjeblikkelige væksthastighed.`};},
-    // Monotoniforhold som interval
-    ()=>{const a=rnd(1,3)*(Math.random()>0.5?1:-1),xE=rnd(-3,3),b=-2*a*xE,c=rnd(-5,5);const xEfmt=fmt(xE);return{type:"mc",text:`f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}. Hvad er monotoniforholdet?`,options:a>0?[`Aftagende for x < ${xEfmt} og voksende for x > ${xEfmt}`,`Voksende for x < ${xEfmt} og aftagende for x > ${xEfmt}`,`Altid voksende`,`Altid aftagende`]:[`Voksende for x < ${xEfmt} og aftagende for x > ${xEfmt}`,`Aftagende for x < ${xEfmt} og voksende for x > ${xEfmt}`,`Altid voksende`,`Altid aftagende`],correct:0,explanation:`Toppunktet er i x = ${xEfmt}. a = ${a} er ${a>0?"positiv → minimum → aftagende til venstre, voksende til højre":"negativ → maksimum → voksende til venstre, aftagende til højre"}.`};},
-    ()=>{const a=rnd(-5,5)||1,b=rnd(-8,8);return{type:"input",text:`f'(x) for f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}? (skriv blot tallet)`,answer:String(a),accept:[String(a)],explanation:`Den afledede af ax+b er a = ${a}.`};},
-    ()=>{
-      const a=rnd(1,2)*(Math.random()>0.5?1:-1),b=rnd(-4,4),c=rnd(-5,5);
-      const fn=x=>a*x*x+b*x+c;
-      const fp=x=>2*a*x+b;
-      const xs=linspace(-7,7,400),allY=[...xs.map(fn),...xs.map(fp)];
-      const yMin=Math.max(Math.min(...allY),-20),yMax=Math.min(Math.max(...allY),20);
-      const t1=makeFuncTrace(fn,-7,7,'#185FA5','f(x)');
-      const t2=makeFuncTrace(fp,-7,7,'#C0392B',"f'(x)");
-      t1.name="f(x)";t2.name="f'(x)";
-      const xTop=Math.round(-b/(2*a)*10)/10;
-      const layout=Object.assign({},PLOTLY_LAYOUT_BASE,{
-        showlegend:true,legend:{x:0.02,y:0.98,bgcolor:'rgba(255,255,255,0.85)',bordercolor:'#ddd',borderwidth:1},
-        xaxis:Object.assign({},PLOTLY_LAYOUT_BASE.xaxis,{range:[-7,7]}),
-        yaxis:Object.assign({},PLOTLY_LAYOUT_BASE.yaxis,{range:[yMin,yMax]})
-      });
-      const graph=makePlotSpec([t1,t2],layout);
-      return{type:"mc",text:`Grafen viser f(x) og f'(x). Hvad er x-koordinaten for ekstremumspunktet?`,graph,options:[String(xTop),String(xTop+1),String(xTop-1),String(xTop+2)],correct:0,explanation:`f'(x) = 0 giver x = ${fmt(xTop)}.`};
-    },
-  ],
-  F5:[
-    // 1. Kapitalfremskrivning - vis og bestem
-    ()=>{
-      const K0=rnd(1,10)*100, r=rnd(1,8), n=rnd(2,10);
-      const Kn=Math.round(K0*Math.pow(1+r/100,n)*100)/100;
-      return{type:"input",
-        text:`Der indsættes ${K0} kr. i en bank til en årlig rente på ${r}%. Vis hvordan man udregner beløbet efter ${n} år og bestem dette beløb. (2 dec)`,
-        answer:fmt(Kn),
-        accept:[fmt(Kn),String(Kn),String(Math.round(Kn))],
-        explanation:`Kn = K₀·(1+r)ⁿ = ${K0}·${fmt(1+r/100)}^${n} = ${fmt(Kn)} kr`
-      };
-    },
-    // 2. Annuitetslån - månedlig ydelse
-    ()=>{
-      const K0=rnd(4,20)*10000, rm=rndF(0.3,1.0,1), n=rnd(24,84);
-      const r=rm/100, y=Math.round(K0*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)*100)/100;
-      return{type:"input",
-        text:`En person ønsker at optage et annuitetslån på ${K0} kr. Den månedlige rente er på ${fmt(rm)}% og tilbagebetalingsperioden er på ${n} måneder. Bestem den månedlige ydelse y. (2 dec)`,
-        answer:fmt(y),
-        accept:[fmt(y),String(y)],
-        explanation:`y = K₀·r·(1+r)ⁿ/((1+r)ⁿ−1) = ${K0}·${fmt(r)}·... ≈ ${fmt(y)} kr`
-      };
-    },
-    // 3. Annuitetsopsparing - fremtidsværdi
-    ()=>{
-      const yv=rnd(1,10)*100, rm=rndF(0.5,2.0,1), n=rnd(6,24);
-      const r=rm/100, An=Math.round(yv*(Math.pow(1+r,n)-1)/r*100)/100;
-      return{type:"input",
-        text:`Der indsættes ${yv} kr. på en konto hver måned. Beløbet indsættes i alt ${n} gange og den månedlige rente er ${fmt(rm)}%. Hvor meget står der på kontoen efter den sidste indbetaling? (2 dec)`,
-        answer:fmt(An),
-        accept:[fmt(An),String(An)],
-        explanation:`An = y·((1+r)ⁿ−1)/r = ${yv}·((1+${fmt(r)})^${n}−1)/${fmt(r)} ≈ ${fmt(An)} kr`
-      };
-    },
-    // 4. Effektiv rente fra kvartalsrente
-    ()=>{
-      const rq=rndF(0.5,4.0,1), rEff=Math.round(((Math.pow(1+rq/100,4)-1)*100)*100)/100;
-      return{type:"input",
-        text:`Bestem den årlige effektive rente, når kvartalsrenten (terminsrenten) er på ${fmt(rq)}%. (2 dec)`,
-        answer:fmt(rEff),
-        accept:[fmt(rEff),String(rEff)],
-        explanation:`reff = (1+${fmt(rq)}/100)^4 − 1 = ${fmt(rEff)}%`
-      };
-    },
-    // 5. Effektiv rente fra månedlig rente
-    ()=>{
-      const rm=rndF(0.3,1.5,1), rEff=Math.round(((Math.pow(1+rm/100,12)-1)*100)*100)/100;
-      return{type:"input",
-        text:`Bestem den årlige effektive rente, når den månedlige rente er ${fmt(rm)}%. (2 dec)`,
-        answer:fmt(rEff),
-        accept:[fmt(rEff),String(rEff)],
-        explanation:`reff = (1+${fmt(rm)}/100)^12 − 1 = ${fmt(rEff)}%`
-      };
-    },
-  ],
-  F6:[
-    // 1. Pindediagram fra tabel - aflæs typetal
-    ()=>{
-      const vals=[1,2,3,4,5,6], hyps=Array.from({length:6},()=>rnd(2,20));
+      const vals=[1,2,3,4,5,6];
+      const hyps=Array.from({length:6},()=>rnd(5,25));
       const typIdx=hyps.indexOf(Math.max(...hyps));
+      const tot=hyps.reduce((a,b)=>a+b,0);
       const t=makeBarTrace(vals,hyps,'#B5D4F4');
-      const graph=plotLines([t],[0.3,6.7],[0,Math.max(...hyps)+2]);
+      const graph=plotLines([t],[0.3,6.7],[0,Math.max(...hyps)+3]);
       return{type:"input",
-        text:`Nedenstående pindediagram viser fordelingen af "antal øjne" ved 100 kast med en terning. Aflæs typetallet.`,
+        text:`Nedenstående pindediagram viser fordelingen af "antal øjne" ved ${tot} kast med en terning. Aflæs typetallet.`,
         graph,
         answer:String(vals[typIdx]),
         accept:[String(vals[typIdx])],
         explanation:`Den højeste søjle er ved ${vals[typIdx]} med hyppighed ${hyps[typIdx]} — det er typetallet.`
       };
     },
-    // 2. Typetal og gennemsnit fra hyppighedstabel
+    // 2. Bestem typetal og gennemsnit fra hyppighedstabel
     ()=>{
-      const n=rnd(15,30), vals=[1,2,3,4,5,6];
+      const n=rnd(15,30);
+      const vals=[1,2,3,4,5,6];
       const hyps=Array.from({length:6},()=>rnd(1,Math.floor(n/3)));
       const tot=hyps.reduce((a,b)=>a+b,0);
       const typIdx=hyps.indexOf(Math.max(...hyps));
       const mean=Math.round(vals.reduce((s,v,i)=>s+v*hyps[i],0)/tot*100)/100;
+      const typtal=vals[typIdx];
       return{type:"input",
-        text:`Nedenstående tabel viser hyppighed for ${tot} kast med en terning: antal øjne 1-6 med hyppigheder ${hyps.join(', ')}. Bestem gennemsnittet. (2 dec)`,
-        answer:fmt(mean),
-        accept:[fmt(mean),String(mean)],
-        explanation:`Gennemsnit = (${vals.map((v,i)=>v+'·'+hyps[i]).join('+')}) / ${tot} = ${fmt(mean)}`
+        text:`Nedenstående tabel viser hyppighed og frekvens for ${tot} kast med en terning:\nAntal øjne: 1, 2, 3, 4, 5, 6\nHyppighed: ${hyps.join(', ')}\nBestem typetallet.`,
+        answer:String(typtal),
+        accept:[String(typtal)],
+        explanation:`Typetallet er den observation med højest hyppighed. Hyppighed ${hyps[typIdx]} for ${typtal} øjne er højest → typetal = ${typtal}. Gennemsnit = ${fmt(mean)}.`
       };
     },
     // 3. Beregn frekvenser og summerede frekvenser fra karaktertabel
     ()=>{
       const chars=[-3,0,2,4,7,10,12];
-      const hyps=Array.from({length:7},()=>rnd(0,8));
-      hyps[rnd(2,5)]+=rnd(3,6); // ensure some variation
-      const tot=hyps.reduce((a,b)=>a+b,0)||25;
-      const idx=rnd(1,5);
+      const hyps=[0,rnd(1,3),rnd(2,6),rnd(2,6),rnd(4,10),rnd(2,6),rnd(1,3)];
+      const tot=hyps.reduce((a,b)=>a+b,0);
+      const idx=rnd(2,5);
       const freq=Math.round(hyps[idx]/tot*100)/100;
-      let cumFreq=0;
-      for(let i=0;i<=idx;i++) cumFreq+=hyps[i];
-      const cumFreqPct=Math.round(cumFreq/tot*100)/100;
+      let cumHyp=0;
+      for(let i=0;i<=idx;i++) cumHyp+=hyps[i];
+      const cumFreq=Math.round(cumHyp/tot*100)/100;
       return{type:"input",
-        text:`Karakterfordelingen for ${tot} elever er: ${hyps.join(', ')} (for -3, 00, 02, 4, 7, 10, 12). Hvad er frekvensen for karakteren ${chars[idx]}? (2 dec)`,
+        text:`Nedenstående tabel viser fordelingen af karakterer til en eksamen for ${tot} elever:\nKarakter: -3, 00, 02, 4, 7, 10, 12\nHyppighed: ${hyps.join(', ')}\nHvad er frekvensen for karakteren ${chars[idx]}? (2 dec)`,
         answer:fmt(freq),
         accept:[fmt(freq),String(freq)],
-        explanation:`Frekvens = ${hyps[idx]} / ${tot} = ${fmt(freq)}`
+        explanation:`Frekvens for ${chars[idx]}: ${hyps[idx]} / ${tot} = ${fmt(freq)}. Summeret frekvens til og med ${chars[idx]}: ${fmt(cumFreq)}.`
       };
     },
-    // 4. Aflæs kvartilsæt fra sumkurve + fortolk
+    // 4. Aflæs kvartilsæt fra summeret frekvensgraf
     ()=>{
       const ages=[10,20,25,30,35,40,50,60];
       const cf=[rnd(0,5),rnd(10,20),rnd(25,35),rnd(45,58),rnd(65,75),rnd(80,88),rnd(95,98),100];
@@ -521,86 +414,78 @@ const GENERATORS={
       });
       const graph=makePlotSpec([t1,tQ1,tQ2,tQ3],layout);
       return{type:"input",
-        text:`Nedenstående graf viser en aldersfordeling. Aflæs medianen (Q2) fra sumkurven.`,
+        text:`Nedenstående graf viser aldersfordelingen af dagpengemodtagere i Danmark (summeret frekvens i %). Aflæs kvartilsættet ud fra figuren. Hvad er medianen (Q2)?`,
         graph,
         answer:String(Q2),
         accept:[String(Q2),Q2+" år",String(Q2-5),String(Q2+5)],
-        explanation:`Medianen aflæses ved 50% på y-aksen. Q2 ≈ ${Q2}. Kvartilsættet er Q1=${Q1}, Q2=${Q2}, Q3=${Q3}.`
+        explanation:`Aflæs ved 25%, 50% og 75% på y-aksen. Q1 = ${Q1}, Q2 = ${Q2}, Q3 = ${Q3}. Kvartilsættet er [${Q1}; ${Q2}; ${Q3}].`
       };
     },
-    // 5. Gennemsnit
-    ()=>{const n=rnd(4,7),vals=Array.from({length:n},()=>rnd(1,20)),mean=Math.round(vals.reduce((a,b)=>a+b,0)/n*10)/10;return{type:"input",text:`Beregn gennemsnittet af: ${vals.join(', ')}. (1 dec)`,answer:fmt(mean),accept:[fmt(mean),String(mean)],explanation:`(${vals.join('+')})/${n} = ${fmt(mean)}`};},
-    // 6. Median
-    ()=>{const n=rnd(3,7)*2-1,vals=Array.from({length:n},()=>rnd(1,20)).sort((a,b)=>a-b),med=vals[Math.floor(n/2)];return{type:"input",text:`Find medianen i: ${vals.join(', ')}.`,answer:String(med),accept:[String(med)],explanation:`Sorteret. Midterste = ${med}.`};},
-    // 7. Variationsbredde
-    ()=>{const n=rnd(5,8),vals=Array.from({length:n},()=>rnd(1,30)),vb=Math.max(...vals)-Math.min(...vals);return{type:"input",text:`Variationsbredde for: ${vals.join(', ')}?`,answer:String(vb),accept:[String(vb)],explanation:`max−min = ${Math.max(...vals)}−${Math.min(...vals)} = ${vb}`};},
-    // 8. Relativ frekvens
-    ()=>{const total=rnd(20,50),hyp=rnd(3,total-3),freq=Math.round(hyp/total*100)/100;return{type:"input",text:`${hyp} ud af ${total} observationer. Relativ frekvens? (2 dec)`,answer:fmt(freq),accept:[fmt(freq),String(freq)],explanation:`${hyp}/${total} = ${fmt(freq)}`};},
   ],
-  F7:[
-    ()=>{const total=rnd(4,10),fav=rnd(1,total-1),p=Math.round(fav/total*100)/100;return{type:"input",text:`Pose med ${total} kugler, ${fav} røde. P(rød)? (2 dec)`,answer:fmt(p),accept:[fmt(p),String(p),fav+"/"+total],explanation:`P(rød) = ${fav}/${total} = ${fmt(p)}`};},
-    ()=>{const n=rnd(5,20),p=rnd(1,9)/10,mu=Math.round(n*p*10)/10;return{type:"input",text:`X ~ b(n=${n}, p=${fmt(p)}). Middelværdi μ?`,answer:fmt(mu),accept:[fmt(mu),String(mu)],explanation:`μ = n·p = ${n}·${fmt(p)} = ${fmt(mu)}`};},
+
+  F4:[
+    // 1. Renters rente - kapitalfremskrivning
     ()=>{
-      const n=rnd(8,15),p=rnd(1,4)/10;
-      function C(n,k){return fak(n)/(fak(k)*fak(n-k));}
-      const ks=Array.from({length:n+1},(_,k)=>k);
-      const probs=ks.map(k=>Math.round(C(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k)*1000)/1000);
-      const k=rnd(0,3);const pk=probs[k];
-      const t=makeBarTrace(ks,probs,'#B5D4F4');
-      const tMark={x:[k],y:[probs[k]],type:'bar',marker:{color:'#C0392B'},width:0.5};
-      const graph=plotLines([t,tMark],[-0.5,n+0.5],[0,Math.max(...probs)*1.2]);
-      return{type:"input",text:`Binomialfordeling n=${n}, p=${fmt(p)}. Hvad er P(X=${k})? (aflæs den røde søjle, 2 dec)`,graph,answer:fmt(pk),accept:[fmt(pk),String(pk),fmt(Math.round(pk*10)/10)],explanation:`P(X=${k}) ≈ ${fmt(pk)}`};
+      const K0=rnd(1,10)*100, r=rnd(1,8), n=rnd(2,10);
+      const Kn=Math.round(K0*Math.pow(1+r/100,n)*100)/100;
+      return{type:"input",
+        text:`Der indsættes ${K0} kr. i en bank til en årlig rente på ${r}%. Vis, hvordan man udregner, hvor meget de ${K0} kr. er vokset til efter ${n} år, og bestem dette beløb. (2 dec)`,
+        answer:fmt(Kn),
+        accept:[fmt(Kn),String(Kn),String(Math.round(Kn))],
+        explanation:`Kₙ = K₀ · (1 + r)ⁿ = ${K0} · ${fmt(1+r/100)}^${n} = ${fmt(Kn)} kr.`
+      };
     },
-    ()=>{const r=rnd(1,5),b=rnd(1,5),tot=r+b,pR=Math.round(r/tot*100)/100;return{type:"mc",text:`Pose med ${r} røde og ${b} blå. P(rød)?`,options:[fmt(pR),fmt(Math.round(b/tot*100)/100),fmt(Math.round(r/(r+b+1)*100)/100),"1"],correct:0,explanation:`P(rød) = ${r}/${tot} = ${fmt(pR)}`};},
-    ()=>{const n=rnd(5,10),k=rnd(2,Math.min(4,n-1)),C=fak(n)/(fak(k)*fak(n-k));return{type:"input",text:`Vælg ${k} ud af ${n} (rækkefølge irrelevant). Antal muligheder?`,answer:String(C),accept:[String(C)],explanation:`K(${n},${k}) = ${C}`};},
-
-    // Sandsynlighedsfelt i tabelform
-    ()=>{const r=rnd(1,4),b=rnd(1,4),g=rnd(1,3);const tot=r+b+g;const pR=Math.round(r/tot*100)/100,pB=Math.round(b/tot*100)/100,pG=Math.round(g/tot*100)/100;return{type:"mc",text:`En pose indeholder ${r} røde, ${b} blå og ${g} grønne kugler. Der trækkes én tilfældig kugle. Hvad er P(blå)?`,options:[fmt(pB),fmt(pR),fmt(pG),fmt(Math.round((r+g)/tot*100)/100)],correct:0,explanation:`P(blå) = ${b}/${tot} = ${fmt(pB)}`};},
-    // Betinget sandsynlighed
-    ()=>{const pA=rnd(2,7)/10,pBgA=rnd(3,8)/10,pAnB=Math.round(pA*pBgA*100)/100;return{type:"input",text:`P(A) = ${fmt(pA)} og P(B|A) = ${fmt(pBgA)}. Beregn P(A ∩ B). (2 dec)`,answer:fmt(pAnB),accept:[fmt(pAnB),String(pAnB)],explanation:`P(A ∩ B) = P(A) · P(B|A) = ${fmt(pA)} · ${fmt(pBgA)} = ${fmt(pAnB)}`};},
-    // Bayes
-    ()=>{const pA=rnd(2,5)/10,pBgA=rnd(5,9)/10,pBgNotA=rnd(1,4)/10;const pNotA=Math.round((1-pA)*10)/10;const pB=Math.round((pA*pBgA+pNotA*pBgNotA)*100)/100;const pAgB=Math.round(pA*pBgA/pB*100)/100;return{type:"input",text:`P(A) = ${fmt(pA)}, P(B|A) = ${fmt(pBgA)}, P(B|Aᶜ) = ${fmt(pBgNotA)}. Brug Bayes: P(A|B) = ? (2 dec)`,answer:fmt(pAgB),accept:[fmt(pAgB),String(pAgB)],explanation:`P(B) = ${fmt(pA)}·${fmt(pBgA)} + ${fmt(pNotA)}·${fmt(pBgNotA)} = ${fmt(pB)}. P(A|B) = ${fmt(pA)}·${fmt(pBgA)}/${fmt(pB)} = ${fmt(pAgB)}`};},
-    // Varians og std binomial
-    ()=>{const n=rnd(5,20),p=rnd(2,8)/10,mu=Math.round(n*p*100)/100,vari=Math.round(n*p*(1-p)*100)/100,std=Math.round(Math.sqrt(n*p*(1-p))*100)/100;return{type:"input",text:`X ~ b(n=${n}, p=${fmt(p)}). Hvad er standardafvigelsen σ? (2 dec)`,answer:fmt(std),accept:[fmt(std),String(std)],explanation:`σ = √(n·p·(1−p)) = √(${n}·${fmt(p)}·${fmt(1-p)}) = √${fmt(vari)} = ${fmt(std)}`};},
-    ()=>{const n=rnd(3,10),p=rnd(1,5)/10;return{type:"mc",text:`Hvad angiver X ~ b(n=${n}, p=${fmt(p)})?`,options:[`Binomialfordeling, ${n} forsøg, p=${fmt(p)}`,"Normalfordeling","Poissonfordeling"],correct:0,explanation:`b(n,p) = binomialfordeling med n=${n} og p=${fmt(p)}.`};},
-  ],
-  F8:[
-    ()=>{const alpha=Math.random()>0.5?0.05:0.01,reject=Math.random()>0.5,p=reject?rndF(0.001,alpha-0.001,3):rndF(alpha+0.001,0.2,3);return{type:"mc",text:`χ²-test: p = ${fmt(p)}, α = ${fmt(alpha)}. Konklusion?`,options:["Forkast H₀ — statistisk signifikant sammenhæng","Accepter H₀ — ingen statistisk signifikant sammenhæng"],correct:reject?0:1,explanation:`p ${reject?'<':'>'} α → ${reject?"forkast":"accepter"} H₀.`};},
-    ()=>{const phat=rndF(0.2,0.8,2),se=rndF(0.02,0.07,3),upper=Math.round((phat+1.96*se)*1000)/1000;return{type:"input",text:`p̂ = ${fmt(phat)}, SE = ${fmt(se)}. Øvre grænse 95% KI? (3 dec)`,answer:fmt(upper),accept:[fmt(upper),String(upper)],explanation:`${fmt(phat)} + 1,96·${fmt(se)} = ${fmt(upper)}`};},
-    ()=>{const phat=rndF(0.2,0.8,2),se=rndF(0.02,0.07,3),lower=Math.round((phat-1.96*se)*1000)/1000;return{type:"input",text:`p̂ = ${fmt(phat)}, SE = ${fmt(se)}. Nedre grænse 95% KI? (3 dec)`,answer:fmt(lower),accept:[fmt(lower),String(lower)],explanation:`${fmt(phat)} − 1,96·${fmt(se)} = ${fmt(lower)}`};},
-    ()=>{const r=rnd(2,4),c=rnd(2,5),df=(r-1)*(c-1);return{type:"input",text:`Frihedsgrader for ${r}×${c} krydstabel?`,answer:String(df),accept:[String(df)],explanation:`(${r}−1)·(${c}−1) = ${df}`};},
-    ()=>{const r1=rnd(50,150),r2=rnd(50,150),tot=r1+r2,c1=rnd(30,Math.floor(tot*0.7)),e11=Math.round(r1*c1/tot*100)/100;return{type:"input",text:`Rækketotal=${r1}, kolonnetotal=${c1}, n=${tot}. Forventet E₁₁? (2 dec)`,answer:fmt(e11),accept:[fmt(e11),String(e11)],explanation:`E₁₁ = ${r1}·${c1}/${tot} = ${fmt(e11)}`};},
-
-    // Frihedsgrader fra konkret tabel
-    ()=>{const r=rnd(2,4),c=rnd(2,5),df=(r-1)*(c-1);const rword=["to","tre","fire"][r-2],cword=["to","tre","fire","fem"][c-2];return{type:"input",text:`En χ²-test undersøger sammenhæng mellem ${rword} kategorier (rækker) og ${cword} kategorier (kolonner). Hvad er antallet af frihedsgrader?`,answer:String(df),accept:[String(df)],explanation:`Frihedsgrader = (${r}−1)·(${c}−1) = ${r-1}·${c-1} = ${df}`};},
-    // Fortolk KI i kontekst  
-    ()=>{const phat=rndF(0.2,0.8,2),se=rndF(0.02,0.06,2),lower=Math.round((phat-1.96*se)*100)/100,upper=Math.round((phat+1.96*se)*100)/100;return{type:"mc",text:`Et 95% konfidensinterval for andelen af elever der består er [${fmt(lower)}; ${fmt(upper)}]. Hvad betyder dette?`,options:[`Vi er 95% sikre på at den sande andel ligger mellem ${fmt(lower)} og ${fmt(upper)}`,`95% af eleverne består`,`Præcis ${fmt(phat)*100}% består med sikkerhed`,`Intervallet indeholder altid den sande andel`],correct:0,explanation:`Et 95% KI betyder at metoden med 95% sandsynlighed giver et interval der indeholder den sande populationsandel.`};},
-    // p-værdi fortolkning
-    ()=>{const alpha=0.05,p=rndF(0.001,0.15,3),reject=p<alpha;return{type:"mc",text:`I en χ²-test fås p = ${fmt(p)}. Signifikansniveauet er α = 0,05. Hvad er den korrekte konklusion?`,options:[reject?`p < α, så vi forkaster H₀. Der er statistisk signifikant sammenhæng.`:`p > α, så vi accepterer H₀. Der er ingen statistisk signifikant sammenhæng.`,reject?`p < α, så vi accepterer H₀`:`p > α, så vi forkaster H₀`,"Vi kan ikke konkludere noget","p-værdien er for lille til at bruge"],correct:0,explanation:`p = ${fmt(p)} er ${reject?'mindre end':'større end'} α = 0,05 → ${reject?'forkast H₀':'accepter H₀'}.`};},
-    ()=>{return{type:"mc",text:`H₀ i en χ²-uafhængighedstest?`,options:["Ingen sammenhæng mellem de to variable","Der er sammenhæng","Middelværdierne er ens"],correct:0,explanation:`H₀: ingen sammenhæng. H₁: sammenhæng.`};},
+    // 2. Annuitetslån - månedlig ydelse
+    ()=>{
+      const K0=rnd(4,20)*10000, rm=rndF(0.3,1.0,1), n=rnd(24,84);
+      const r=rm/100, y=Math.round(K0*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)*100)/100;
+      return{type:"input",
+        text:`En person ønsker at optage et annuitetslån på ${K0} kr. til køb af en bil. Den månedlige rente er på ${fmt(rm)}% og tilbagebetalingsperioden er på ${n} måneder. Bestem den månedlige ydelse y. (2 dec)`,
+        answer:fmt(y),
+        accept:[fmt(y),String(y)],
+        explanation:`y = K₀ · r · (1+r)ⁿ / ((1+r)ⁿ − 1) = ${K0} · ${fmt(r)} · ... ≈ ${fmt(y)} kr.`
+      };
+    },
+    // 3. Annuitetsopsparing - fremtidsværdi
+    ()=>{
+      const yv=rnd(1,10)*100, rm=rndF(0.5,2.0,1), n=rnd(6,24);
+      const r=rm/100, An=Math.round(yv*(Math.pow(1+r,n)-1)/r*100)/100;
+      return{type:"input",
+        text:`Der indsættes hver måned ${yv} kr. på en konto. Beløbet indsættes i alt ${n} gange og den månedlige rente er ${fmt(rm)}%. Hvor meget står der på kontoen efter den sidste indbetaling? (2 dec)`,
+        answer:fmt(An),
+        accept:[fmt(An),String(An)],
+        explanation:`Aₙ = y · ((1+r)ⁿ − 1) / r = ${yv} · ((1+${fmt(r)})^${n} − 1) / ${fmt(r)} ≈ ${fmt(An)} kr.`
+      };
+    },
+    // 4. Effektiv rente fra kvartalsrente/terminsrente
+    ()=>{
+      const rq=rndF(0.5,4.0,1), rEff=Math.round(((Math.pow(1+rq/100,4)-1)*100)*100)/100;
+      return{type:"input",
+        text:`Bestem den årlige effektive rente, når kvartalsrenten (terminsrenten) er på ${fmt(rq)}%. (2 dec)`,
+        answer:fmt(rEff),
+        accept:[fmt(rEff),String(rEff)],
+        explanation:`reff = (1 + ${fmt(rq)}/100)⁴ − 1 = ${fmt(rEff)}%`
+      };
+    },
   ],
 };
 
-let selected="F1",sessionQs=[],qIndex=0,correct=0,wrong=0,maxCount=5,answered=false;
+let selected="F0",sessionQs=[],qIndex=0,correct=0,wrong=0,maxCount=5,answered=false;
 
 function startAllForloeb(){
-  // Pick 2 questions from each forloeb = 16 questions total overview
-  const perForloeb = maxCount <= 5 ? 1 : maxCount <= 10 ? 1 : 2;
-  sessionQs = [];
-  Object.keys(FORLOEB).forEach(key => {
-    const gens = shuffle([...GENERATORS[key]]);
-    let added = 0, attempts = 0;
-    while(added < perForloeb && attempts < perForloeb * 6){
+  const perForloeb=maxCount<=5?1:maxCount<=10?1:2;
+  sessionQs=[];
+  Object.keys(FORLOEB).forEach(key=>{
+    const gens=shuffle([...GENERATORS[key]]);
+    let added=0,attempts=0;
+    while(added<perForloeb&&attempts<perForloeb*6){
       attempts++;
-      try{
-        const q = gens[added % gens.length]();
-        if(q){ q._forloeb = key; sessionQs.push(q); added++; }
-      }catch(e){}
+      try{const q=gens[added%gens.length]();if(q){q._forloeb=key;sessionQs.push(q);added++;}}catch(e){}
     }
   });
-  sessionQs = shuffle(sessionQs);
-  qIndex=0; correct=0; wrong=0;
-  show("screen-quiz"); renderQuestion();
+  sessionQs=shuffle(sessionQs);
+  qIndex=0;correct=0;wrong=0;
+  show("screen-quiz");renderQuestion();
 }
 
 function init(){
@@ -620,7 +505,7 @@ function goHome(){show("screen-select");}
 function generateQuestions(){
   const gens=shuffle([...GENERATORS[selected]]);
   const result=[];let attempts=0;
-  while(result.length<maxCount&&attempts<maxCount*6){
+  while(result.length<maxCount&&attempts<maxCount*10){
     attempts++;
     try{const q=gens[result.length%gens.length]();if(q)result.push(q);}catch(e){}
   }
