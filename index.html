@@ -103,7 +103,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 </div>
 
 <script>
-const FORLOEB={F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"};
+const FORLOEB={F0:"Grundlæggende færdigheder",F1:"Lineære funktioner",F2:"Eksponentielle funktioner",F3:"Andengradsfunktioner",F4:"Differentialregning",F5:"Finansiel regning",F6:"Beskrivende statistik",F7:"Sandsynlighedsregning",F8:"Hypotesetest og konfidensintervaller"};
 
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d));}
@@ -166,53 +166,164 @@ function makeScatterTrace(xs,ys,color,size){
 
 // ---- QUESTION GENERATORS ----
 const GENERATORS={
+  F0:[
+    // Løs ligning x² + k = c
+    ()=>{const k=rnd(1,10),c=rnd(k+1,k+20),x=Math.round(Math.sqrt(c-k));if(x*x!==c-k)return GENERATORS.F0[0]();return{type:"input",text:`Løs ligningen x² ${k>0?'+ '+k:'− '+Math.abs(k)} = ${c}.`,answer:String(x),accept:[String(x),String(-x),"x="+x,"±"+x],explanation:`x² = ${c-k} → x = ±√${c-k} = ±${x}`};},
+    // Reducér udtryk med parenteser
+    ()=>{const a=rnd(2,5),bx=rnd(1,6),by=rnd(1,6),c=rnd(2,5),dx=rnd(1,6),dy=rnd(1,6);const rx=a*bx-c*dx,ry=a*by-c*dy;const rxStr=rx===0?"":rx>0?`${rx}x`:`${rx}x`,ryStr=ry===0?"":ry>0?`+ ${ry}y`:`− ${Math.abs(ry)}y`;const ans=rx===0?`${ry}y`:ry===0?`${rx}x`:`${rx}x ${ry>=0?'+ '+ry:'− '+Math.abs(ry)}y`;return{type:"input",text:`Reducér: ${a}(${bx}x + ${by}y) − ${c}(${dx}x + ${dy}y)`,answer:ans,accept:[ans,ans.replace(' ','')],explanation:`= ${a*bx}x + ${a*by}y − ${c*dx}x − ${c*dy}y = ${ans}`};},
+    // Løs eksponentiel ligning a·bˣ = c
+    ()=>{const base=rnd(2,5),exp=rnd(2,4),bv=rnd(1,4),rhs=bv*Math.pow(base,exp);return{type:"input",text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,answer:String(exp),accept:[String(exp),"x="+exp,"x = "+exp],explanation:`${bv} · ${base}ˣ = ${rhs} → ${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`};},
+    // Potensregneregler
+    ()=>{const a=rnd(2,6),m=rnd(2,5),n=rnd(2,4);const ans=m+n;return{type:"input",text:`Beregn: ${a}^${m} · ${a}^${n} = ${a}^?`,answer:String(ans),accept:[String(ans)],explanation:`${a}^${m} · ${a}^${n} = ${a}^(${m}+${n}) = ${a}^${ans}`};},
+    // Reducér med kvadrat på toleddet
+    ()=>{const a=rnd(1,5),b=rnd(1,5);const r1=a*a,r2=2*a*b,r3=b*b;return{type:"input",text:`Hvad er (${a}x + ${b})²? Skriv koefficienten foran x².`,answer:String(r1),accept:[String(r1)],explanation:`(${a}x + ${b})² = ${r1}x² + ${r2}x + ${r3}. Koefficienten foran x² er ${r1}.`};},
+    // Brøk med fakultet
+    ()=>{function fak(n){return n<=1?1:n*fak(n-1);}const n=rnd(4,7),k=rnd(1,3);const ans=Array.from({length:k},(_,i)=>n-i).reduce((a,b)=>a*b,1);return{type:"input",text:`Beregn ${n}! / ${n-k}!`,answer:String(ans),accept:[String(ans)],explanation:`${n}!/${(n-k)}! = ${Array.from({length:k},(_,i)=>n-i).join(' · ')} = ${ans}`};},
+  ],
   F1:[
-    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`En lineær funktion: f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er hældningskoefficienten?`,answer:String(a),accept:[String(a)],explanation:`Hældningskoefficienten er a = ${a}.`};},
-    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`Hvad er skæringen med y-aksen for f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}?`,answer:String(b),accept:[String(b)],explanation:`Skæringen med y-aksen er b = ${b} (sæt x=0).`};},
+    // 1. Bestem forskriften gennem to punkter
     ()=>{
-      const a=rnd(-4,4)||1,b=rnd(-8,8);
-      const x1=rnd(-2,2),y1=a*x1+b,x2=x1+rnd(2,5),y2=a*x2+b;
-      const xMin=x1-2,xMax=x2+2,yMin=Math.min(y1,y2)-3,yMax=Math.max(y1,y2)+3;
-      const t1=makeFuncTrace(x=>a*x+b,xMin,xMax,'#185FA5');
-      const t2=makeScatterTrace([x1,x2],[y1,y2],'#C0392B',9);
-      const graph=plotLines([t1,t2],[xMin,xMax],[yMin,yMax]);
-      return{type:"input",text:`Grafen viser en lineær funktion der går gennem (${x1}, ${y1}) og (${x2}, ${y2}). Hvad er hældningskoefficienten?`,graph,answer:String(a),accept:[String(a)],explanation:`a = (${y2}−${y1})/(${x2}−${x1}) = ${y2-y1}/${x2-x1} = ${a}`};
+      const a=rnd(-4,4)||1, b=rnd(-8,8);
+      const x1=rnd(0,4), y1=a*x1+b, x2=x1+rnd(1,4), y2=a*x2+b;
+      return{type:"input",
+        text:`Bestem forskriften for den lineære funktion, hvis graf går gennem punkterne (x₁, y₁) = (${x1}, ${y1}) og (x₂, y₂) = (${x2}, ${y2}).`,
+        answer:`f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}`,
+        accept:[`${a}x${b>=0?'+'+b:''+b}`,`${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}`,String(b)+"_hældning_"+String(a)],
+        explanation:`a = (${y2}−${y1})/(${x2}−${x1}) = ${a}. b = ${y1}−${a}·${x1} = ${b}. Forskrift: f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`
+      };
     },
-    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10),x=rnd(-5,5),fx=a*x+b;return{type:"input",text:`Bestem f(${x}) når f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}.`,answer:String(fx),accept:[String(fx)],explanation:`f(${x}) = ${a}·${x} ${b>=0?'+ '+b:'− '+Math.abs(b)} = ${fx}`};},
-    ()=>{const s=rnd(20,60),p=rnd(8,20),k=rnd(3,15),t=s+p*k;return{type:"input",text:`En taxa koster ${s} kr i startgebyr og ${p} kr/km. Hvad koster ${k} km?`,answer:String(t),accept:[String(t),t+" kr"],explanation:`${s} + ${p}·${k} = ${t} kr`};},
+    // 2. Tegn graf + forklar a og b (MC)
+    ()=>{
+      const a=rnd(-4,4)||1, b=rnd(-8,8);
+      const fn=x=>a*x+b;
+      const t1=makeFuncTrace(fn,-5,5,'#185FA5');
+      const tP=makeScatterTrace([0],[b],'#C0392B',9);
+      const graph=plotLines([t1,tP],[-5,5],[Math.min(fn(-5),fn(5))-2,Math.max(fn(-5),fn(5))+2]);
+      return{type:"mc",
+        text:`Grafen viser f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er den røde prikkes betydning?`,
+        graph,
+        options:[`Det er skæringspunktet med y-aksen: (0, ${b})`,`Det er nulpunktet`,`Det er toppunktet`,`Det er hældningskoefficienten`],
+        correct:0,
+        explanation:`Den røde prik er (0, ${b}) — skæringen med y-aksen, svarende til b = ${b}. Hældningen er a = ${a}.`
+      };
+    },
+    // 3. Bestem nulpunkt
+    ()=>{
+      const a=rnd(1,5), b=rnd(-20,20);
+      const np=-b/a;
+      if(!Number.isInteger(np)) return GENERATORS.F1[2]();
+      return{type:"input",
+        text:`En funktion er givet ved f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Bestem nulpunktet.`,
+        answer:String(np),
+        accept:[String(np),"x="+np,"x = "+np],
+        explanation:`Sæt f(x) = 0: ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} = 0 → x = ${np}`
+      };
+    },
+    // 4. Aflæs definitionsmængde og værdimængde fra begrænset funktion
+    ()=>{
+      const a=rnd(-3,3)||1, b=rnd(-5,5);
+      const x1=rnd(-2,1), x2=x1+rnd(3,6);
+      const y1=a*x1+b, y2=a*x2+b;
+      const yMin=Math.min(y1,y2), yMax=Math.max(y1,y2);
+      const xMin2=Math.min(x1,x2), xMax2=Math.max(x1,x2);
+      const fn=x=>a*x+b;
+      const t1={x:[x1,x2],y:[y1,y2],mode:'lines',line:{color:'#185FA5',width:2.5}};
+      const tStart=makeScatterTrace([x1],[y1],'#185FA5',10);
+      const tEnd={x:[x2],y:[y2],mode:'markers',marker:{color:'#185FA5',size:10,symbol:'circle-open',line:{width:2,color:'#185FA5'}}};
+      const graph=plotLines([t1,tStart,tEnd],[x1-2,x2+2],[yMin-2,yMax+2]);
+      const dm=`[${x1}; ${x2}]`, vm=a>0?`[${y1}; ${y2}]`:`[${y2}; ${y1}]`;
+      return{type:"mc",
+        text:`Grafen viser en begrænset lineær funktion. Hvad er definitionsmængden?`,
+        graph,
+        options:[dm, `[${y1}; ${y2}]`, `]${x1}; ${x2}[`, `[${x1-1}; ${x2+1}]`],
+        correct:0,
+        explanation:`Definitionsmængden aflæses på x-aksen: Dm = ${dm}. Værdimængden er Vm = ${vm}.`
+      };
+    },
+    // 5. Taxa - opskriv funktionsforskrift
+    ()=>{
+      const s=rnd(20,60), p=rnd(8,20), k=rnd(3,15), t=s+p*k;
+      return{type:"input",
+        text:`En taxa koster ${s} kr i startgebyr og ${p} kr/km. Opskriv en funktionsforskrift f(x) for den samlede pris. Hvad er f(${k})?`,
+        answer:String(t),
+        accept:[String(t), t+" kr"],
+        explanation:`f(x) = ${p}x + ${s}. f(${k}) = ${p}·${k} + ${s} = ${p*k} + ${s} = ${t} kr.`
+      };
+    },
+    // 6. Hældningskoefficient
+    ()=>{const a=rnd(-5,5)||1,b=rnd(-10,10);return{type:"input",text:`f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}. Hvad er hældningskoefficienten?`,answer:String(a),accept:[String(a)],explanation:`Hældningskoefficienten er a = ${a}.`};},
+    // 7. Omvendt funktion
     ()=>{const a=rnd(1,5),b=rnd(-10,10);return{type:"mc",text:`Hvad er den omvendte funktion til f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)}?`,options:[`f⁻¹(x) = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`,`f⁻¹(x) = ${a}x ${b>=0?'− '+b:'+ '+Math.abs(b)}`,`f⁻¹(x) = x / ${a}`,`f⁻¹(x) = (x${b>=0?' + '+b:' − '+Math.abs(b)}) / ${a}`],correct:0,explanation:`Byt om: x = ${a}y ${b>=0?'+ '+b:'− '+Math.abs(b)} → y = (x${b>=0?' − '+b:' + '+Math.abs(b)}) / ${a}`};},
+    // 8. Voksende/aftagende
     ()=>{const a=rnd(-4,4)||1,b=rnd(-5,5);return{type:"mc",text:`Er f(x) = ${a}x ${b>=0?'+ '+b:'− '+Math.abs(b)} voksende eller aftagende?`,options:["Voksende","Aftagende"],correct:a>0?0:1,explanation:`a = ${a} er ${a>0?"positiv → voksende":"negativ → aftagende"}.`};},
   ],
   F2:[
-    ()=>{const b=rnd(2,50),a=rndF(0.85,1.5,2);return{type:"input",text:`f(x) = ${b} · ${fmt(a)}ˣ. Hvad er begyndelsesværdien?`,answer:String(b),accept:[String(b)],explanation:`f(0) = ${b} · 1 = ${b}`};},
-    ()=>{const r=rnd(2,20),b=rnd(2,30),a=parseFloat((1+r/100).toFixed(2));return{type:"input",text:`Hvad er vækstraten i % for f(x) = ${b} · ${fmt(a)}ˣ?`,answer:String(r),accept:[String(r),r+"%"],explanation:`a = ${fmt(a)} = 1 + r/100 → r = ${r}%`};},
+    // 1. Begyndelsesværdi og vækstrate fra forskrift
     ()=>{
-      const rising=Math.random()>0.5,a=rising?rndF(1.2,1.8,2):rndF(0.4,0.85,2),b=rnd(1,5);
-      const T=rising?Math.round(Math.log(2)/Math.log(a)*10)/10:Math.round(Math.log(0.5)/Math.log(a)*10)/10;
-      const xMax=Math.ceil(T*3.5);
-      const word=rising?"fordoblingskonstanten T₂":"halveringskonstanten T½";
-      const fn=x=>b*Math.pow(a,x);
-      const yMax=fn(xMax)*1.1,yMin=0;
-      const t1=makeFuncTrace(fn,0,xMax,'#185FA5');
-      const tMark=makeScatterTrace([T],[fn(T)],'#C0392B',10);
-      const graph=plotLines([t1,tMark],[0,xMax],[yMin,yMax]);
-      return{type:"input",text:`Aflæs ${word} fra grafen. (1 decimal — brug zoom ved behov)`,graph,answer:fmt(T),accept:[fmt(T),String(T)],explanation:`${word} er x-værdien hvor f er ${rising?"fordoblet":"halveret"}. T = ${fmt(T)}.`};
+      const b=rnd(2,100), r=rnd(2,25), a=parseFloat((1+r/100).toFixed(2));
+      return{type:"input",
+        text:`En eksponentiel funktion har forskriften f(x) = ${b} · ${fmt(a)}ˣ. Hvad er funktionens begyndelsesværdi og vækstrate? Skriv vækstraten i %.`,
+        answer:String(r),
+        accept:[String(r), r+"%", r+" %"],
+        explanation:`Begyndelsesværdi = ${b} (f(0) = ${b}·1 = ${b}). Vækstrate: a = ${fmt(a)} = 1 + r/100 → r = ${r}%.`
+      };
     },
+    // 2. Identificer forskrift fra graf (3 valgmuligheder)
     ()=>{
-      const rising=Math.random()>0.5,a=rising?rndF(1.3,1.8,2):rndF(0.4,0.75,2),b=rnd(2,6);
-      const a2=rising?rndF(0.4,0.75,2):rndF(1.3,1.8,2),b2=rnd(2,6);
-      const which=rnd(0,1);
-      const [ua,ub]=[which===0?a:a2,which===0?b:b2];
+      const rising=Math.random()>0.5, a=rising?rndF(1.2,1.8,2):rndF(0.4,0.8,2), b=rnd(2,6);
+      const a2=rising?rndF(0.4,0.8,2):rndF(1.2,1.8,2), b2=rnd(2,6);
+      const a3=rndF(1.02,1.1,2), b3=rnd(8,15);
+      const which=0;
+      const fn=x=>b*Math.pow(a,x);
       const xMax=6;
-      const fn=x=>ub*Math.pow(ua,x);
-      const yMax=Math.max(fn(0),fn(xMax))*1.2,yMin=0;
+      const yMax=Math.max(fn(0),fn(xMax))*1.2, yMin=0;
       const t1=makeFuncTrace(fn,-2,xMax,'#185FA5');
       const graph=plotLines([t1],[-2,xMax],[yMin,yMax]);
-      const opts=[`f(x) = ${b} · ${fmt(a)}ˣ`,`g(x) = ${b2} · ${fmt(a2)}ˣ`];
-      return{type:"mc",text:`Hvilken forskrift passer til grafen?`,graph,options:opts,correct:which,explanation:`Begyndelsesværdien er ${ub} og a = ${fmt(ua)} → ${ua>1?"voksende":"aftagende"}.`};
+      const opts=[`f(x) = ${b} · ${fmt(a)}ˣ`,`g(x) = ${b2} · ${fmt(a2)}ˣ`,`h(x) = ${b3} · ${fmt(a3)}ˣ`];
+      return{type:"mc",
+        text:`Bestem hvilken af de tre følgende forskrifter, der svarer til grafen.`,
+        graph,
+        options:opts,
+        correct:0,
+        explanation:`Begyndelsesværdien er ${b} (aflæs y-aksen ved x=0) og funktionen er ${a>1?"voksende":"aftagende"} med a = ${fmt(a)}.`
+      };
     },
+    // 3. Aflæs fordoblingskonstant fra graf
+    ()=>{
+      const a=rndF(1.2,1.8,2), b=rnd(1,4);
+      const T=Math.round(Math.log(2)/Math.log(a)*10)/10;
+      const xMax=Math.ceil(T*3.5);
+      const fn=x=>b*Math.pow(a,x);
+      const t1=makeFuncTrace(fn,0,xMax,'#185FA5');
+      const tMark=makeScatterTrace([T],[fn(T)],'#C0392B',10);
+      const graph=plotLines([t1,tMark],[0,xMax],[0,fn(xMax)*1.1]);
+      return{type:"input",
+        text:`Grafen for en voksende eksponentiel funktion er tegnet nedenfor. Aflæs fordoblingskonstanten T₂. (1 decimal)`,
+        graph,
+        answer:fmt(T),
+        accept:[fmt(T),String(T)],
+        explanation:`Fordoblingskonstanten er den x-værdi hvor funktionen er fordoblet. T₂ = ${fmt(T)}.`
+      };
+    },
+    // 4. Voksende eller aftagende - begrund
+    ()=>{
+      const rising=Math.random()>0.5, a=rising?rndF(1.1,1.8,2):rndF(0.5,0.9,2), b=rnd(2,30);
+      return{type:"mc",
+        text:`Lad f(x) = ${b} · ${fmt(a)}ˣ. Er funktionen voksende eller aftagende? Begrund dit svar.`,
+        options:[
+          `${rising?"Voksende":"Aftagende"} — fordi a = ${fmt(a)} er ${a>1?"større end 1":"mindre end 1"}`,
+          `${rising?"Aftagende":"Voksende"} — fordi b = ${b} er positiv`,
+          `${rising?"Aftagende":"Voksende"} — fordi a = ${fmt(a)} er ${a>1?"større end 1":"mindre end 1"}`,
+          `Hverken voksende eller aftagende`
+        ],
+        correct:0,
+        explanation:`a = ${fmt(a)} er ${a>1?"større end 1 → voksende":"mindre end 1 → aftagende"}.`
+      };
+    },
+    // 5. Løs eksponentiel ligning
     ()=>{const base=rnd(2,4),exp=rnd(2,4),bv=rnd(1,3),rhs=bv*Math.pow(base,exp);return{type:"input",text:`Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,answer:String(exp),accept:[String(exp),"x="+exp],explanation:`${base}ˣ = ${rhs/bv} = ${base}^${exp} → x = ${exp}`};},
-    ()=>{const rising=Math.random()>0.5,a=rising?rndF(1.1,1.8,2):rndF(0.5,0.9,2),b=rnd(2,30);return{type:"mc",text:`Er f(x) = ${b} · ${fmt(a)}ˣ voksende eller aftagende?`,options:["Voksende","Aftagende"],correct:rising?0:1,explanation:`a = ${fmt(a)} ${a>1?"er > 1 → voksende":"er < 1 → aftagende"}.`};},
+    // 6. Begyndelsesværdi aflæs
+    ()=>{const b=rnd(2,50),a=rndF(0.85,1.5,2);return{type:"input",text:`f(x) = ${b} · ${fmt(a)}ˣ. Hvad er begyndelsesværdien?`,answer:String(b),accept:[String(b)],explanation:`f(0) = ${b} · 1 = ${b}`};},
   ],
   F3:[
     ()=>{const a=rnd(1,3),b=rnd(-6,6),c=rnd(-5,5),d=b*b-4*a*c;return{type:"input",text:`Beregn diskriminanten for f(x) = ${a}x² ${b>=0?'+ '+b:'− '+Math.abs(b)}x ${c>=0?'+ '+c:'− '+Math.abs(c)}.`,answer:String(d),accept:[String(d)],explanation:`d = b²−4ac = ${b*b}−${4*a*c} = ${d}`};},
@@ -293,48 +404,137 @@ const GENERATORS={
     },
   ],
   F5:[
-    ()=>{const K0=rnd(1,10)*1000,r=rnd(1,8),n=rnd(2,10),Kn=Math.round(K0*Math.pow(1+r/100,n));return{type:"input",text:`${K0} kr til ${r}% p.a. Hvad er beløbet efter ${n} år? (hele kr)`,answer:String(Kn),accept:[String(Kn),Kn+" kr"],explanation:`Kn = ${K0}·${fmt(1+r/100)}^${n} = ${Kn} kr`};},
-    ()=>{const rm=rndF(0.3,1.5,1),rEff=Math.round(((Math.pow(1+rm/100,12)-1)*100)*100)/100;return{type:"input",text:`Månedlig rente ${fmt(rm)}%. Effektiv årlig rente? (2 dec)`,answer:fmt(rEff),accept:[fmt(rEff),String(rEff)],explanation:`(1+${fmt(rm)}/100)^12−1 = ${fmt(rEff)}%`};},
-    ()=>{const K0=rnd(5,30)*10000,rm=rndF(0.3,1.0,1),n=rnd(24,84),r=rm/100,y=Math.round(K0*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)*100)/100;return{type:"input",text:`Annuitetslån ${K0} kr, ${n} måneder, ${fmt(rm)}%/md. Månedlig ydelse? (2 dec)`,answer:fmt(y),accept:[fmt(y),String(y)],explanation:`y = K₀·r·(1+r)ⁿ/((1+r)ⁿ−1) ≈ ${fmt(y)} kr`};},
-    ()=>{const yv=rnd(2,10)*100,rm=rndF(0.5,1.5,1),n=rnd(6,24),r=rm/100,An=Math.round(yv*(Math.pow(1+r,n)-1)/r*100)/100;return{type:"input",text:`${yv} kr/md i ${n} måneder, ${fmt(rm)}%/md rente. Fremtidsværdi? (2 dec)`,answer:fmt(An),accept:[fmt(An),String(An)],explanation:`An = ${yv}·((1+${fmt(r)})^${n}−1)/${fmt(r)} ≈ ${fmt(An)} kr`};},
-    ()=>{const rq=rndF(0.5,3.0,1),rEff=Math.round(((Math.pow(1+rq/100,4)-1)*100)*100)/100;return{type:"input",text:`Kvartalsrente ${fmt(rq)}%. Effektiv årlig rente? (2 dec)`,answer:fmt(rEff),accept:[fmt(rEff),String(rEff)],explanation:`(1+${fmt(rq)}/100)^4−1 = ${fmt(rEff)}%`};},
+    // 1. Kapitalfremskrivning - vis og bestem
+    ()=>{
+      const K0=rnd(1,10)*100, r=rnd(1,8), n=rnd(2,10);
+      const Kn=Math.round(K0*Math.pow(1+r/100,n)*100)/100;
+      return{type:"input",
+        text:`Der indsættes ${K0} kr. i en bank til en årlig rente på ${r}%. Vis hvordan man udregner beløbet efter ${n} år og bestem dette beløb. (2 dec)`,
+        answer:fmt(Kn),
+        accept:[fmt(Kn),String(Kn),String(Math.round(Kn))],
+        explanation:`Kn = K₀·(1+r)ⁿ = ${K0}·${fmt(1+r/100)}^${n} = ${fmt(Kn)} kr`
+      };
+    },
+    // 2. Annuitetslån - månedlig ydelse
+    ()=>{
+      const K0=rnd(4,20)*10000, rm=rndF(0.3,1.0,1), n=rnd(24,84);
+      const r=rm/100, y=Math.round(K0*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)*100)/100;
+      return{type:"input",
+        text:`En person ønsker at optage et annuitetslån på ${K0} kr. Den månedlige rente er på ${fmt(rm)}% og tilbagebetalingsperioden er på ${n} måneder. Bestem den månedlige ydelse y. (2 dec)`,
+        answer:fmt(y),
+        accept:[fmt(y),String(y)],
+        explanation:`y = K₀·r·(1+r)ⁿ/((1+r)ⁿ−1) = ${K0}·${fmt(r)}·... ≈ ${fmt(y)} kr`
+      };
+    },
+    // 3. Annuitetsopsparing - fremtidsværdi
+    ()=>{
+      const yv=rnd(1,10)*100, rm=rndF(0.5,2.0,1), n=rnd(6,24);
+      const r=rm/100, An=Math.round(yv*(Math.pow(1+r,n)-1)/r*100)/100;
+      return{type:"input",
+        text:`Der indsættes ${yv} kr. på en konto hver måned. Beløbet indsættes i alt ${n} gange og den månedlige rente er ${fmt(rm)}%. Hvor meget står der på kontoen efter den sidste indbetaling? (2 dec)`,
+        answer:fmt(An),
+        accept:[fmt(An),String(An)],
+        explanation:`An = y·((1+r)ⁿ−1)/r = ${yv}·((1+${fmt(r)})^${n}−1)/${fmt(r)} ≈ ${fmt(An)} kr`
+      };
+    },
+    // 4. Effektiv rente fra kvartalsrente
+    ()=>{
+      const rq=rndF(0.5,4.0,1), rEff=Math.round(((Math.pow(1+rq/100,4)-1)*100)*100)/100;
+      return{type:"input",
+        text:`Bestem den årlige effektive rente, når kvartalsrenten (terminsrenten) er på ${fmt(rq)}%. (2 dec)`,
+        answer:fmt(rEff),
+        accept:[fmt(rEff),String(rEff)],
+        explanation:`reff = (1+${fmt(rq)}/100)^4 − 1 = ${fmt(rEff)}%`
+      };
+    },
+    // 5. Effektiv rente fra månedlig rente
+    ()=>{
+      const rm=rndF(0.3,1.5,1), rEff=Math.round(((Math.pow(1+rm/100,12)-1)*100)*100)/100;
+      return{type:"input",
+        text:`Bestem den årlige effektive rente, når den månedlige rente er ${fmt(rm)}%. (2 dec)`,
+        answer:fmt(rEff),
+        accept:[fmt(rEff),String(rEff)],
+        explanation:`reff = (1+${fmt(rm)}/100)^12 − 1 = ${fmt(rEff)}%`
+      };
+    },
   ],
   F6:[
-    ()=>{const n=rnd(4,7),vals=Array.from({length:n},()=>rnd(1,20)),mean=Math.round(vals.reduce((a,b)=>a+b,0)/n*10)/10;return{type:"input",text:`Gennemsnit af: ${vals.join(', ')}? (1 dec)`,answer:fmt(mean),accept:[fmt(mean),String(mean)],explanation:`(${vals.join('+')})/${n} = ${fmt(mean)}`};},
-    ()=>{const n=rnd(3,7)*2-1,vals=Array.from({length:n},()=>rnd(1,20)).sort((a,b)=>a-b),med=vals[Math.floor(n/2)];return{type:"input",text:`Medianen i: ${vals.join(', ')}?`,answer:String(med),accept:[String(med)],explanation:`Sorteret. Midterste = ${med}.`};},
-    ()=>{const n=rnd(5,8),vals=Array.from({length:n},()=>rnd(1,30)),vb=Math.max(...vals)-Math.min(...vals);return{type:"input",text:`Variationsbredde for: ${vals.join(', ')}?`,answer:String(vb),accept:[String(vb)],explanation:`max−min = ${Math.max(...vals)}−${Math.min(...vals)} = ${vb}`};},
+    // 1. Pindediagram fra tabel - aflæs typetal
     ()=>{
-      const vals=[1,2,3,4,5,6],hyps=Array.from({length:6},()=>rnd(2,15));
+      const vals=[1,2,3,4,5,6], hyps=Array.from({length:6},()=>rnd(2,20));
       const typIdx=hyps.indexOf(Math.max(...hyps));
       const t=makeBarTrace(vals,hyps,'#B5D4F4');
       const graph=plotLines([t],[0.3,6.7],[0,Math.max(...hyps)+2]);
-      return{type:"input",text:`Aflæs typetallet fra pindediagrammet.`,graph,answer:String(vals[typIdx]),accept:[String(vals[typIdx])],explanation:`Den højeste søjle er ved ${vals[typIdx]} — det er typetallet.`};
+      return{type:"input",
+        text:`Nedenstående pindediagram viser fordelingen af "antal øjne" ved 100 kast med en terning. Aflæs typetallet.`,
+        graph,
+        answer:String(vals[typIdx]),
+        accept:[String(vals[typIdx])],
+        explanation:`Den højeste søjle er ved ${vals[typIdx]} med hyppighed ${hyps[typIdx]} — det er typetallet.`
+      };
     },
+    // 2. Typetal og gennemsnit fra hyppighedstabel
     ()=>{
-      const ages=[15,20,25,30,35,40,45,50,55,60];
-      const cf=[rnd(0,3),rnd(8,18),rnd(25,38),rnd(45,58),rnd(63,73),rnd(78,86),rnd(88,93),rnd(95,97),rnd(98,99),100];
+      const n=rnd(15,30), vals=[1,2,3,4,5,6];
+      const hyps=Array.from({length:6},()=>rnd(1,Math.floor(n/3)));
+      const tot=hyps.reduce((a,b)=>a+b,0);
+      const typIdx=hyps.indexOf(Math.max(...hyps));
+      const mean=Math.round(vals.reduce((s,v,i)=>s+v*hyps[i],0)/tot*100)/100;
+      return{type:"input",
+        text:`Nedenstående tabel viser hyppighed for ${tot} kast med en terning: antal øjne 1-6 med hyppigheder ${hyps.join(', ')}. Bestem gennemsnittet. (2 dec)`,
+        answer:fmt(mean),
+        accept:[fmt(mean),String(mean)],
+        explanation:`Gennemsnit = (${vals.map((v,i)=>v+'·'+hyps[i]).join('+')}) / ${tot} = ${fmt(mean)}`
+      };
+    },
+    // 3. Beregn frekvenser og summerede frekvenser fra karaktertabel
+    ()=>{
+      const chars=[-3,0,2,4,7,10,12];
+      const hyps=Array.from({length:7},()=>rnd(0,8));
+      hyps[rnd(2,5)]+=rnd(3,6); // ensure some variation
+      const tot=hyps.reduce((a,b)=>a+b,0)||25;
+      const idx=rnd(1,5);
+      const freq=Math.round(hyps[idx]/tot*100)/100;
+      let cumFreq=0;
+      for(let i=0;i<=idx;i++) cumFreq+=hyps[i];
+      const cumFreqPct=Math.round(cumFreq/tot*100)/100;
+      return{type:"input",
+        text:`Karakterfordelingen for ${tot} elever er: ${hyps.join(', ')} (for -3, 00, 02, 4, 7, 10, 12). Hvad er frekvensen for karakteren ${chars[idx]}? (2 dec)`,
+        answer:fmt(freq),
+        accept:[fmt(freq),String(freq)],
+        explanation:`Frekvens = ${hyps[idx]} / ${tot} = ${fmt(freq)}`
+      };
+    },
+    // 4. Aflæs kvartilsæt fra sumkurve + fortolk
+    ()=>{
+      const ages=[10,20,25,30,35,40,50,60];
+      const cf=[rnd(0,5),rnd(10,20),rnd(25,35),rnd(45,58),rnd(65,75),rnd(80,88),rnd(95,98),100];
       function readQ(p){let i=0;while(i<cf.length-1&&cf[i]<p)i++;return ages[i];}
       const Q1=readQ(25),Q2=readQ(50),Q3=readQ(75);
       const t1={x:ages,y:cf,mode:'lines+markers',line:{color:'#185FA5',width:2.5},marker:{color:'#185FA5',size:7}};
-      const tQ={x:[ages[0],ages[ages.length-1]],y:[25,25],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'},showlegend:false};
-      const tQ2={x:[ages[0],ages[ages.length-1]],y:[50,50],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'},showlegend:false};
-      const tQ3={x:[ages[0],ages[ages.length-1]],y:[75,75],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'},showlegend:false};
+      const tQ1={x:[ages[0],ages[ages.length-1]],y:[25,25],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'}};
+      const tQ2={x:[ages[0],ages[ages.length-1]],y:[50,50],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'}};
+      const tQ3={x:[ages[0],ages[ages.length-1]],y:[75,75],mode:'lines',line:{color:'#C0392B',width:1,dash:'dot'}};
       const layout=Object.assign({},PLOTLY_LAYOUT_BASE,{
-        xaxis:Object.assign({},PLOTLY_LAYOUT_BASE.xaxis,{range:[13,62],title:{text:'Alder',font:{size:12}}}),
+        xaxis:Object.assign({},PLOTLY_LAYOUT_BASE.xaxis,{range:[8,62],title:{text:'Alder',font:{size:12}}}),
         yaxis:Object.assign({},PLOTLY_LAYOUT_BASE.yaxis,{range:[-2,105],title:{text:'Summeret frekvens (%)',font:{size:12}}})
       });
-      const graph=makePlotSpec([t1,tQ,tQ2,tQ3],layout);
-      return{type:"input",text:`Aflæs medianen (Q2) fra sumkurven — brug de røde hjælpelinjer ved 25%, 50% og 75%.`,graph,answer:String(Q2),accept:[String(Q2),Q2+" år",String(Q2-5),String(Q2+5)],explanation:`Medianen aflæses ved 50% på y-aksen. Q2 ≈ ${Q2}.`};
+      const graph=makePlotSpec([t1,tQ1,tQ2,tQ3],layout);
+      return{type:"input",
+        text:`Nedenstående graf viser en aldersfordeling. Aflæs medianen (Q2) fra sumkurven.`,
+        graph,
+        answer:String(Q2),
+        accept:[String(Q2),Q2+" år",String(Q2-5),String(Q2+5)],
+        explanation:`Medianen aflæses ved 50% på y-aksen. Q2 ≈ ${Q2}. Kvartilsættet er Q1=${Q1}, Q2=${Q2}, Q3=${Q3}.`
+      };
     },
-
-    // Gennemsnit fra hyppighedstabel
-    ()=>{const vals=[1,2,3,4,5,6],hyps=Array.from({length:6},()=>rnd(1,10));const tot=hyps.reduce((a,b)=>a+b,0);const mean=Math.round(vals.reduce((s,v,i)=>s+v*hyps[i],0)/tot*100)/100;return{type:"input",text:`Datasæt med ${tot} observationer: antal øjne 1-6 med hyppigheder ${hyps.join(', ')}. Hvad er gennemsnittet? (2 dec)`,answer:fmt(mean),accept:[fmt(mean),String(mean)],explanation:`Gennemsnit = (${vals.map((v,i)=>v+'·'+hyps[i]).join('+')}) / ${tot} = ${fmt(mean)}`};},
-    // Typetal fra hyppighedstabel
-    ()=>{const vals=[1,2,3,4,5,6],hyps=Array.from({length:6},()=>rnd(1,10));const typIdx=hyps.indexOf(Math.max(...hyps));return{type:"input",text:`Hyppigheder for antal øjne 1-6 er: ${hyps.join(', ')}. Hvad er typetallet?`,answer:String(vals[typIdx]),accept:[String(vals[typIdx])],explanation:`${vals[typIdx]} har den højeste hyppighed (${hyps[typIdx]}) og er dermed typetallet.`};},
-    // Konstruer frekvenstabel - beregn frekvens
-    ()=>{const total=rnd(20,60),hyps=Array.from({length:4},()=>rnd(3,15));const tot=hyps.reduce((a,b)=>a+b,0);const freqs=hyps.map(h=>Math.round(h/tot*100)/100);const idx=rnd(0,3);return{type:"input",text:`I et datasæt med ${tot} observationer er hyppighederne: ${hyps.join(', ')}. Hvad er frekvensen for den ${idx+1}. kategori? (2 dec)`,answer:fmt(freqs[idx]),accept:[fmt(freqs[idx]),String(freqs[idx])],explanation:`Frekvens = ${hyps[idx]} / ${tot} = ${fmt(freqs[idx])}`};},
-    // Fortolk kvartilsæt
-    ()=>{const Q1=rnd(20,35),Q2=rnd(36,45),Q3=rnd(46,60);return{type:"mc",text:`Et kvartilsæt er: Q1 = ${Q1}, Q2 = ${Q2}, Q3 = ${Q3}. Hvad er kvartilafstanden?`,options:[String(Q3-Q1),String(Q3-Q2),String(Q2-Q1),String(Q3)],correct:0,explanation:`Kvartilafstand = Q3 − Q1 = ${Q3} − ${Q1} = ${Q3-Q1}.`};},
+    // 5. Gennemsnit
+    ()=>{const n=rnd(4,7),vals=Array.from({length:n},()=>rnd(1,20)),mean=Math.round(vals.reduce((a,b)=>a+b,0)/n*10)/10;return{type:"input",text:`Beregn gennemsnittet af: ${vals.join(', ')}. (1 dec)`,answer:fmt(mean),accept:[fmt(mean),String(mean)],explanation:`(${vals.join('+')})/${n} = ${fmt(mean)}`};},
+    // 6. Median
+    ()=>{const n=rnd(3,7)*2-1,vals=Array.from({length:n},()=>rnd(1,20)).sort((a,b)=>a-b),med=vals[Math.floor(n/2)];return{type:"input",text:`Find medianen i: ${vals.join(', ')}.`,answer:String(med),accept:[String(med)],explanation:`Sorteret. Midterste = ${med}.`};},
+    // 7. Variationsbredde
+    ()=>{const n=rnd(5,8),vals=Array.from({length:n},()=>rnd(1,30)),vb=Math.max(...vals)-Math.min(...vals);return{type:"input",text:`Variationsbredde for: ${vals.join(', ')}?`,answer:String(vb),accept:[String(vb)],explanation:`max−min = ${Math.max(...vals)}−${Math.min(...vals)} = ${vb}`};},
+    // 8. Relativ frekvens
     ()=>{const total=rnd(20,50),hyp=rnd(3,total-3),freq=Math.round(hyp/total*100)/100;return{type:"input",text:`${hyp} ud af ${total} observationer. Relativ frekvens? (2 dec)`,answer:fmt(freq),accept:[fmt(freq),String(freq)],explanation:`${hyp}/${total} = ${fmt(freq)}`};},
   ],
   F7:[
