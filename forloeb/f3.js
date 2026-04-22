@@ -1,129 +1,87 @@
-// F3 — Deskriptiv statistik
+// F2 — Eksponentielle funktioner
 GENERATORS.F3 = [
 
-  // 1. Lav pindediagram — træk søjler op
+  // 1. Begyndelsesværdi og vækstrate
   () => {
-    const vals = [1, 2, 3, 4, 5, 6];
-    const hyps = Array.from({ length: 6 }, () => rnd(5, 25));
-    const tot = hyps.reduce((a, b) => a + b, 0);
-    const freqs = hyps.map(h => fmt(Math.round(h / tot * 100) / 100));
-    return {
-      type: "pinde",
-      text: `Nedenstående tabel viser fordelingen af "antal øjne" ved ${tot} kast med en terning.\nLav et pindediagram over fordelingen ved at trække søjlerne op.`,
-      tableHeaders: ["Antal øjne", "Hyppighed", "Frekvens"],
-      tableRows: vals.map((v, i) => [String(v), String(hyps[i]), freqs[i]]),
-      tableFooter: ["I alt", String(tot), "1,00"],
-      labels: vals,
-      answers: hyps,
-      yMax: Math.max(...hyps) + 3,
-      explanation: `Søjlernes højde svarer til hyppigheden for hvert antal øjne.`
-    };
-  },
-
-  // 2. Typetal og gennemsnit — tabel + fields
-  () => {
-    const vals = [1, 2, 3, 4, 5, 6];
-    const n = rnd(15, 30);
-    const hyps = Array.from({ length: 6 }, () => rnd(1, Math.floor(n / 3)));
-    const tot = hyps.reduce((a, b) => a + b, 0);
-    const typIdx = hyps.indexOf(Math.max(...hyps));
-    const typtal = vals[typIdx];
-    const mean = Math.round(vals.reduce((s, v, i) => s + v * hyps[i], 0) / tot * 100) / 100;
-    const freqs = hyps.map(h => fmt(Math.round(h / tot * 100) / 100));
+    const b = rnd(2, 50), a = rndF(1.05, 1.5, 2);
+    const vækst = Math.round((a - 1) * 100);
     return {
       type: "fields",
-      text: `Nedenstående tabel viser hyppighed og frekvens for ${tot} kast med en terning.\nBestem typetal og gennemsnit.`,
-      tableHeaders: ["Antal øjne", "Hyppighed", "Frekvens"],
-      tableRows: vals.map((v, i) => [String(v), String(hyps[i]), freqs[i]]),
-      tableFooter: ["I alt", String(tot), "1,00"],
+      text: `En eksponentiel funktion har følgende forskrift:\nf(x) = ${b} · ${fmt(a)}ˣ\nHvad er funktionens begyndelsesværdi og vækstrate?`,
       fields: [
-        { prefix: "Typetal =", suffix: "" },
-        { prefix: "Gennemsnit =", suffix: "" }
+        { prefix: "Begyndelsesværdi =", suffix: "" },
+        { prefix: "Vækstrate =", suffix: "%" }
       ],
-      answers: [String(typtal), fmt(mean)],
-      explanation: `Typetal = ${typtal} (hyppighed ${hyps[typIdx]} er højest). Gennemsnit = ${fmt(mean)}.`
+      answers: [String(b), String(vækst)],
+      explanation: `Begyndelsesværdien er f(0) = ${b} · 1 = ${b}. Vækstraten r = ${fmt(a)} − 1 = ${vækst}%.`
     };
   },
 
-  // 3. Frekvenser og summerede frekvenser — tabel med inputs
+  // 2. Identificér forskriften fra graf (MC med graf)
   () => {
-    const charLabels = ['-3', '00', '02', '4', '7', '10', '12'];
-    const hyps = [0, rnd(1, 3), rnd(3, 7), rnd(3, 7), rnd(5, 10), rnd(3, 6), rnd(1, 3)];
-    const tot = hyps.reduce((a, b) => a + b, 0);
-    const freqs = hyps.map(h => Math.round(h / tot * 100) / 100);
-    let cumFreqs = [];
-    let cum = 0;
-    freqs.forEach(f => { cum = Math.round((cum + f) * 100) / 100; cumFreqs.push(cum); });
+    const b = rnd(2, 8), rising = Math.random() > 0.5;
+    const a = rising ? rndF(1.1, 1.6, 2) : rndF(0.5, 0.9, 2);
+    const fn = x => b * Math.pow(a, x);
+    const xMin = -3, xMax = rising ? 8 : 10;
+    const t1 = makeFuncTrace(fn, xMin, xMax, '#185FA5');
+    const yVals = linspace(xMin, xMax, 100).map(fn);
+    const graph = plotLines([t1], [xMin, xMax], [0, Math.min(Math.max(...yVals) * 1.1, 40)]);
+    const a2 = rising ? rndF(0.5, 0.89, 2) : rndF(1.1, 1.6, 2);
+    const b3 = b + rnd(2, 6), a3 = rising ? rndF(1.1, 1.6, 2) : rndF(0.5, 0.9, 2);
     return {
-      type: "table",
-      text: `Nedenstående tabel viser fordelingen af karakterer til en eksamen for ${tot} elever.\nBeregn frekvenserne og de summerede frekvenser.`,
-      tableHeaders: ["Karakter", "Hyppighed", "Frekvens", "Summeret frekvens"],
-      tableRows: charLabels.map((c, i) => [c, String(hyps[i])]),
-      tableFooter: ["I alt", String(tot), "1,00", ""],
-      inputCols: [2, 3], // kolonner der skal udfyldes
-      answers: charLabels.map((_, i) => [fmt(freqs[i]), fmt(cumFreqs[i])]),
-      explanation: `Frekvens = hyppighed / total. Summeret frekvens = sum af frekvenser t.o.m. rækken.`
-    };
-  },
-
-  // 4. Aflæs kvartilsæt — graf uden røde linjer, fields Q1, m, Q3
-  () => {
-    const ages = [10, 20, 25, 30, 35, 40, 50, 60];
-    const cf = [rnd(0, 5), rnd(10, 20), rnd(25, 35), rnd(45, 58), rnd(65, 75), rnd(80, 88), rnd(95, 98), 100];
-
-    // Interpolér mange punkter
-    const denseX = [], denseY = [];
-    for (let i = 0; i < ages.length - 1; i++) {
-      const steps = 50;
-      for (let s = 0; s < steps; s++) {
-        const t = s / steps;
-        denseX.push(Math.round((ages[i] + t * (ages[i+1] - ages[i])) * 10) / 10);
-        denseY.push(Math.round((cf[i] + t * (cf[i+1] - cf[i])) * 10) / 10);
-      }
-    }
-    denseX.push(ages[ages.length-1]);
-    denseY.push(cf[cf.length-1]);
-
-    // Læs kvartiler fra de interpolerede punkter
-    function readQ(p) {
-      let i = 0;
-      while (i < denseY.length - 1 && denseY[i] < p) i++;
-      return Math.round(denseX[i]);
-    }
-    const Q1 = readQ(25), Q2 = readQ(50), Q3 = readQ(75);
-
-    const t1 = {
-      x: denseX, y: denseY,
-      mode: 'lines',
-      line: { color: '#185FA5', width: 2.5 },
-      hovertemplate: 'Alder: %{x}<br>Summeret frekvens: %{y}%<extra></extra>'
-    };
-    const t2 = {
-      x: ages, y: cf,
-      mode: 'markers',
-      marker: { color: '#185FA5', size: 7 },
-      hoverinfo: 'skip', showlegend: false
-    };
-    const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-      xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [8, 62], title: { text: 'Alder' } }),
-      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-2, 105], dtick: 10, title: { text: 'Summeret frekvens i %' } }),
-      hovermode: 'x',
-      hoverlabel: { bgcolor: '#fff', bordercolor: '#185FA5', font: { size: 13, color: '#111' } }
-    });
-    const graph = makePlotSpec([t1, t2], layout);
-    return {
-      type: "fields",
-      text: `Nedenstående graf viser aldersfordelingen af dagpengemodtagere i Danmark.\nAflæs kvartilsættet ud fra figuren og fortolk dette.`,
+      type: "mc",
+      text: `Grafen for en eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nBestem hvilken af de 3 følgende forskrifter, der svarer til grafen.`,
       graph,
-      fields: [
-        { prefix: "Q₁ =", suffix: "" },
-        { prefix: "m =", suffix: "" },
-        { prefix: "Q₃ =", suffix: "" }
+      options: [`f(x) = ${b} · ${fmt(a)}ˣ`, `g(x) = ${b} · ${fmt(a2)}ˣ`, `h(x) = ${b3} · ${fmt(a3)}ˣ`],
+      correct: 0,
+      explanation: `Begyndelsesværdien (x=0) er ${b}, og funktionen er ${rising ? "voksende (a > 1)" : "aftagende (0 < a < 1)"}. Det passer på f(x) = ${b} · ${fmt(a)}ˣ.`
+    };
+  },
+
+  // 3. Aflæs fordoblingskonstanten fra graf — altid voksende, helt tal T₂
+  () => {
+    const T = rnd(2, 6); // T₂ er et helt tal 2-6
+    const a = Math.round(Math.pow(2, 1/T) * 100) / 100;
+    const b = rndF(1, 5, 1);
+    const xMax = T * 4;
+    const fn = x => b * Math.pow(a, x);
+    const t1 = makeFuncTrace(fn, 0, xMax, '#185FA5');
+    const tM = makeScatterTrace([T], [fn(T)], '#C0392B', 10);
+    const graph = plotLines([t1, tM], [0, xMax], [0, fn(xMax) * 1.1]);
+    return {
+      type: "input",
+      prefix: "T₂ =",
+      text: `Grafen for en voksende eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nAflæs fordoblingskonstanten.`,
+      graph,
+      answer: String(T),
+      accept: [String(T)],
+      explanation: `Fordoblingskonstanten T₂ aflæses som den x-værdi hvor funktionsværdien er fordoblet. T₂ = ${T}.`
+    };
+  },
+
+  // 4. Voksende eller aftagende — mc2
+  () => {
+    const a1 = rndF(0.5, 0.9, 2);  // f er altid aftagende
+    const a2 = rndF(1.1, 1.8, 2);  // g er altid voksende
+    const b1 = rnd(2, 20), b2 = rnd(2, 20);
+    return {
+      type: "mc2",
+      text: `Lad f(x) = ${b1} · ${fmt(a1)}ˣ og g(x) = ${b2} · ${fmt(a2)}ˣ.\nHvilken af funktionerne er voksende, og hvilken er aftagende? Begrund dit svar.`,
+      questions: [
+        {
+          label: `f(x) = ${b1} · ${fmt(a1)}ˣ`,
+          options: ["Voksende", "Aftagende"],
+          correct: 1,
+          explanation: `a = ${fmt(a1)} er mindre end 1 → aftagende.`
+        },
+        {
+          label: `g(x) = ${b2} · ${fmt(a2)}ˣ`,
+          options: ["Voksende", "Aftagende"],
+          correct: 0,
+          explanation: `a = ${fmt(a2)} er større end 1 → voksende.`
+        }
       ],
-      answers: [String(Q1), String(Q2), String(Q3)],
-      accept_tolerance: 2,
-      showQuartileLines: true,
-      explanation: `Aflæs ved 25%, 50% og 75% på y-aksen. Q₁ = ${Q1}, m = ${Q2} (median), Q₃ = ${Q3}.`
+      explanation: `Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende.`
     };
   },
 
