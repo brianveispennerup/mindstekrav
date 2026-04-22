@@ -513,14 +513,18 @@ function renderQuestion() {
     });
   } else if (q.type === "fields") {
     fieldsDiv.style.display = "block";
+    // Ryd altid gammel tabel
+    const oldTbl = document.getElementById("fields-table-wrap");
+    if (oldTbl) oldTbl.remove();
     const container = document.getElementById("fields-inputs");
     container.innerHTML = "";
     // Vis tabel hvis opgaven har en
     if (q.tableHeaders) {
       const tblWrap = document.createElement("div");
+      tblWrap.id = "fields-table-wrap";
       tblWrap.style.cssText = "overflow-x:auto;margin-bottom:0.75rem;";
       tblWrap.innerHTML = buildTableHTML(q.tableHeaders, q.tableRows, q.tableFooter);
-      container.parentElement.insertBefore(tblWrap, container);
+      fieldsDiv.insertBefore(tblWrap, container);
     }
     q.fields.forEach((f, i) => {
       if (f.prefix) {
