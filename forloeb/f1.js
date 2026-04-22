@@ -19,14 +19,14 @@ GENERATORS.F1 = [
 
   // 2. Tegn grafen — hele tal a og b, vindue -10 til 10
   () => {
-    const a = rnd(-4, 4) || 1;
-    const b = rnd(-7, 7);
+    const b = rnd(-4, 4);
+    const a = rnd(-3, 3) || 1;
     const fStr = `f(x) = ${a}x${b === 0 ? '' : (b > 0 ? ' + ' + b : ' − ' + Math.abs(b))}`;
     return {
       type: "draw",
       text: `Tegn grafen for den lineære funktion med forskriften ${fStr}.\nKlik to punkter på koordinatsystemet som ligger på grafen.\nForklar desuden betydningen af a og b.`,
       drawA: a, drawB: b,
-      drawRange: 10,
+      drawRange: 5,
       explanation: `a = ${a} er hældningen (grafen ${a > 0 ? 'stiger' : 'falder'} ${Math.abs(a)} for hver enhed). b = ${b} er skæringen med y-aksen: (0, ${b}).`
     };
   },

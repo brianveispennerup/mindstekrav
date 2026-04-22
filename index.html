@@ -87,7 +87,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <p class="draw-points-info" id="draw-points-info">Ingen punkter valgt endnu.</p>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="primary" onclick="resetDrawPoints()">Nulstil punkter</button>
-        <button class="primary" id="draw-check-btn" onclick="checkDraw()" style="display:none">Tjek linje</button>
+        <button class="primary" id="draw-check-btn" onclick="checkDraw()">Tjek linje</button>
       </div>
     </div>
     <div id="fields-area" style="display:none">
@@ -182,7 +182,7 @@ const GENERATORS = {};
 let drawState = { a: 0, b: 0, pts: [], plotId: '', xRange: [-6, 6], yRange: [-12, 12] };
 
 function initDrawCanvas(a, b, range) {
-  range = range || 10;
+  range = range || 5;
   drawState.a = a; drawState.b = b; drawState.pts = [];
   const wrap = document.getElementById('draw-canvas-wrap');
   wrap.innerHTML = '';
@@ -192,23 +192,23 @@ function initDrawCanvas(a, b, range) {
   div.id = plotId;
   wrap.appendChild(div);
   const xr = [-range, range];
-  const yLo = -range, yHi = range;
-  drawState.xRange = xr; drawState.yRange = [yLo, yHi];
+  drawState.xRange = xr; drawState.yRange = [-range, range];
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
     height: 340, dragmode: false,
     xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: xr, dtick: 1 }),
-    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [yLo, yHi], dtick: 1 })
+    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-range, range], dtick: 1 })
   });
-  Plotly.newPlot(plotId, [], layout, { responsive: true, displayModeBar: false });
-  document.getElementById(plotId).on('plotly_click', function (data) {
-    if (answered) return;
-    const px = Math.round(data.points[0].x);
-    const py = Math.round(data.points[0].y);
-    if (drawState.pts.length < 2) {
-      drawState.pts.push({ x: px, y: py });
-      updateDrawPlot();
-      if (drawState.pts.length === 2) document.getElementById('draw-check-btn').style.display = 'block';
-    }
+  Plotly.newPlot(plotId, [], layout, { responsive: true, displayModeBar: false }).then(() => {
+    document.getElementById(plotId).on('plotly_click', function(data) {
+      if (answered) return;
+      if (!data || !data.points || !data.points[0]) return;
+      const px = Math.round(data.points[0].x);
+      const py = Math.round(data.points[0].y);
+      if (drawState.pts.length < 2) {
+        drawState.pts.push({ x: px, y: py });
+        updateDrawPlot();
+      }
+    });
   });
 }
 
@@ -368,7 +368,7 @@ function renderQuestion() {
     drawDiv.style.display = "block";
     document.getElementById('draw-check-btn').style.display = 'none';
     document.getElementById('draw-points-info').textContent = 'Ingen punkter valgt endnu.';
-    requestAnimationFrame(() => requestAnimationFrame(() => initDrawCanvas(q.drawA, q.drawB, q.drawRange || 10)));
+    requestAnimationFrame(() => requestAnimationFrame(() => initDrawCanvas(q.drawA, q.drawB, q.drawRange || 5)));
   } else if (q.type === "fields") {
     fieldsDiv.style.display = "block";
     const container = document.getElementById("fields-inputs");
