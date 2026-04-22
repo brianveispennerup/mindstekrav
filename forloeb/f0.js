@@ -7,7 +7,7 @@ GENERATORS.F0 = [
     if (x * x !== c - k) return GENERATORS.F0[0]();
     return {
       type: "input",
-      text: `Løs ligningen x² + ${k} = ${c}.`,
+      prefix: "x = ±",
       answer: String(x),
       accept: [String(x), String(-x), "x=" + x, "±" + x],
       explanation: `x² = ${c - k} → x = ±√${c - k} = ±${x}`
@@ -37,6 +37,7 @@ GENERATORS.F0 = [
     const base = rnd(2, 5), exp = rnd(2, 4), bv = rnd(1, 4), rhs = bv * Math.pow(base, exp);
     return {
       type: "input",
+      prefix: "x =",
       text: `Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,
       answer: String(exp),
       accept: [String(exp), "x=" + exp, "x = " + exp],
