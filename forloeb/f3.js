@@ -13,6 +13,7 @@ GENERATORS.F3 = [
         { prefix: "Vækstrate =", suffix: "%" }
       ],
       answers: [String(b), String(vækst)],
+      link: ["https://laerebogimatematik1hhx.systime.dk/?id=226#c1264", "https://laerebogimatematik1hhx.systime.dk/?id=290#c2523"],
       explanation: `Begyndelsesværdien er f(0) = ${b} · 1 = ${b}. Vækstraten r = ${fmt(a)} − 1 = ${vækst}%.`
     };
   },
@@ -34,6 +35,7 @@ GENERATORS.F3 = [
       graph,
       options: [`f(x) = ${b} · ${fmt(a)}ˣ`, `g(x) = ${b} · ${fmt(a2)}ˣ`, `h(x) = ${b3} · ${fmt(a3)}ˣ`],
       correct: 0,
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=226",
       explanation: `Begyndelsesværdien (x=0) er ${b}, og funktionen er ${rising ? "voksende (a > 1)" : "aftagende (0 < a < 1)"}. Det passer på f(x) = ${b} · ${fmt(a)}ˣ.`
     };
   },
@@ -55,6 +57,7 @@ GENERATORS.F3 = [
       graph,
       answer: String(T),
       accept: [String(T)],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=230#c1288",
       explanation: `Fordoblingskonstanten T₂ aflæses som den x-værdi hvor funktionsværdien er fordoblet. T₂ = ${T}.`
     };
   },
@@ -81,7 +84,8 @@ GENERATORS.F3 = [
           explanation: `a = ${fmt(a2)} er større end 1 → voksende.`
         }
       ],
-      explanation: `Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende.`
+      explanation: `Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende.`,
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=226"
     };
   },
 
