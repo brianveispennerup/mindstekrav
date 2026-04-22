@@ -198,7 +198,13 @@ function initDrawCanvas(a, b, range) {
     xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: xr, dtick: 1 }),
     yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-range, range], dtick: 1 })
   });
-  Plotly.newPlot(plotId, [], layout, { responsive: true, displayModeBar: false }).then(() => {
+  // Usynligt baggrundstrace så plotly_click virker overalt i grafen
+  const bgTrace = {
+    x: [-range, range], y: [-range, range],
+    mode: 'markers', marker: { opacity: 0, size: 1 },
+    hoverinfo: 'none', showlegend: false
+  };
+  Plotly.newPlot(plotId, [bgTrace], layout, { responsive: true, displayModeBar: false }).then(() => {
     document.getElementById(plotId).on('plotly_click', function(data) {
       if (answered) return;
       if (!data || !data.points || !data.points[0]) return;
@@ -209,6 +215,24 @@ function initDrawCanvas(a, b, range) {
         updateDrawPlot();
       }
     });
+    // Touch support til mobil
+    const plotEl = document.getElementById(plotId);
+    plotEl.addEventListener('touchend', function(e) {
+      if (answered || drawState.pts.length >= 2) return;
+      e.preventDefault();
+      const touch = e.changedTouches[0];
+      const rect = plotEl.getBoundingClientRect();
+      const gd = plotEl._fullLayout;
+      const xaxis = gd.xaxis, yaxis = gd.yaxis;
+      const relX = touch.clientX - rect.left;
+      const relY = touch.clientY - rect.top;
+      const px = Math.round(xaxis.p2d(relX - gd.margin.l));
+      const py = Math.round(yaxis.p2d(relY - gd.margin.t));
+      if (px >= xr[0] && px <= xr[1] && py >= -range && py <= range) {
+        drawState.pts.push({ x: px, y: py });
+        updateDrawPlot();
+      }
+    }, { passive: false });
   });
 }
 
