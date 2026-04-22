@@ -121,27 +121,20 @@ GENERATORS.F6 = [
     };
   },
 
-  // 6. Aflæs sandsynlighed fra binomialfordeling graf
+  // 6. Aflæs P(X = k) fra binomialfordeling graf — maks ~5 synlige søjler
   () => {
-    const n = rnd(10, 20);
-    const p = rndF(0.1, 0.5, 1);
+    const n = rnd(10, 15);
+    // Skæv fordeling — p tæt på 0,1 eller 0,9
+    const p = Math.random() > 0.5 ? rndF(0.1, 0.25, 2) : rndF(0.75, 0.9, 2);
     function fak(x) { return x <= 1 ? 1 : x * fak(x - 1); }
     function C(nn, kk) { return fak(nn) / (fak(kk) * fak(nn - kk)); }
     const probs = Array.from({ length: n + 1 }, (_, k) =>
       Math.round(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k) * 1000) / 1000
     );
+    // Find de ~5 søjler med højest sandsynlighed
     const mid = Math.round(n * p);
-    const k = rnd(1, Math.min(mid + 2, n - 1));
-    // Vælg tilfældig ulighed
-    const types = [
-      { text: `P(X = ${k})`, val: probs[k] },
-      { text: `P(X ≤ ${k})`, val: probs.slice(0, k + 1).reduce((a, b) => a + b, 0) },
-      { text: `P(X ≥ ${k})`, val: probs.slice(k).reduce((a, b) => a + b, 0) },
-      { text: `P(X < ${k})`, val: probs.slice(0, k).reduce((a, b) => a + b, 0) },
-      { text: `P(X > ${k})`, val: probs.slice(k + 1).reduce((a, b) => a + b, 0) },
-    ];
-    const chosen = types[rnd(0, types.length - 1)];
-    const answer = Math.round(chosen.val * 10000) / 100;
+    const k = rnd(Math.max(0, mid - 1), Math.min(n, mid + 1));
+    const answer = Math.round(probs[k] * 10000) / 100;
     const t = {
       x: Array.from({ length: n + 1 }, (_, i) => i),
       y: probs,
@@ -155,14 +148,14 @@ GENERATORS.F6 = [
     const graph = makePlotSpec([t], layout);
     return {
       type: "input",
-      prefix: chosen.text + " ≈",
+      prefix: `P(X = ${k}) ≈`,
       suffix: "%",
-      text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for ${chosen.text}.\n(Svar angives med 2 decimaler)`,
+      text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for at få præcis ${k} succeser.\n(Svar angives med 2 decimaler)`,
       graph,
       answer: fmt(answer),
       accept: [fmt(answer), fmt(Math.round(answer * 10) / 10)],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
-      explanation: `${chosen.text} ≈ ${fmt(answer)}%.`
+      explanation: `P(X = ${k}) ≈ ${fmt(answer)}%.`
     };
   },
 
