@@ -75,13 +75,16 @@ GENERATORS.F1 = [
 
   // 5. Taxa tekstopgave
   () => {
-    const s = rnd(20, 60), p = rnd(8, 20), k = rnd(3, 15), t = s + p * k;
+    const s = rnd(20, 60), p = rnd(8, 20);
     return {
-      type: "input",
-      text: `En taxatur koster ${s} kr. i startgebyr og kilometerprisen er ${p} kr.\nOpskriv en funktionsforskrift, der angiver den samlede pris for taxaturen som en funktion af antal kørte kilometer.\nHvad er f(${k})?`,
-      answer: String(t),
-      accept: [String(t), t + " kr", t + " kr."],
-      explanation: `f(x) = ${s} + ${p}x. f(${k}) = ${s} + ${p}·${k} = ${t} kr.`
+      type: "fields",
+      text: `En taxatur koster ${s} kr. i startgebyr og kilometerprisen er ${p} kr.\nOpskriv en funktionsforskrift, der angiver den samlede pris for taxaturen som en funktion af antal kørte kilometer.`,
+      fields: [
+        { prefix: "f(x) =", suffix: "x +" },
+        { suffix: "" }
+      ],
+      answers: [String(p), String(s)],
+      explanation: `Kilometerprisen er hældningen a = ${p}, startgebyret er skæringen b = ${s}. Forskrift: f(x) = ${p}x + ${s}.`
     };
   },
 
