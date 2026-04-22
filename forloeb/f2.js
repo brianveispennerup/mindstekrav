@@ -16,6 +16,7 @@ GENERATORS.F2 = [
       labels: vals,
       answers: hyps,
       yMax: Math.max(...hyps) + 3,
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=269#c2096",
       explanation: `Søjlernes højde svarer til hyppigheden for hvert antal øjne.`
     };
   },
@@ -41,6 +42,7 @@ GENERATORS.F2 = [
         { prefix: "Gennemsnit =", suffix: "" }
       ],
       answers: [String(typtal), fmt(mean)],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=270",
       explanation: `Typetal = ${typtal} (hyppighed ${hyps[typIdx]} er højest). Gennemsnit = ${fmt(mean)}.`
     };
   },
@@ -62,6 +64,7 @@ GENERATORS.F2 = [
       tableFooter: ["I alt", String(tot), "1,00", ""],
       inputCols: [2, 3], // kolonner der skal udfyldes
       answers: charLabels.map((_, i) => [fmt(freqs[i]), fmt(cumFreqs[i])]),
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=268",
       explanation: `Frekvens = hyppighed / total. Summeret frekvens = sum af frekvenser t.o.m. rækken.`
     };
   },
@@ -123,6 +126,7 @@ GENERATORS.F2 = [
       answers: [String(Q1), String(Q2), String(Q3)],
       accept_tolerance: 2,
       showQuartileLines: true,
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=275#c2245",
       explanation: `Aflæs ved 25%, 50% og 75% på y-aksen. Q₁ = ${Q1}, m = ${Q2} (median), Q₃ = ${Q3}.`
     };
   },
