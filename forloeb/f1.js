@@ -26,8 +26,7 @@ GENERATORS.F1 = [
     return {
       type: "draw",
       text: `Tegn grafen for den lineære funktion med forskriften ${fStr}.\nKlik to punkter på koordinatsystemet som ligger på grafen.\nForklar desuden betydningen af a og b.`,
-      drawA: a, drawB: b,
-      drawRange: 5,
+      drawA: a, drawB: b, drawRange: 5,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=222#c2444",
       explanation: `a = ${a} er hældningen (grafen ${a > 0 ? 'stiger' : 'falder'} ${Math.abs(a)} for hver enhed). b = ${b} er skæringen med y-aksen: (0, ${b}).`
     };
@@ -50,7 +49,7 @@ GENERATORS.F1 = [
     };
   },
 
-  // 4. Aflæs Dm og Vm — lukket venstre [, åben højre [
+  // 4. Aflæs Dm og Vm
   () => {
     const a = rnd(-3, 3) || 1, b = rnd(-5, 5);
     const x1 = rnd(-4, 0), x2 = x1 + rnd(3, 6);
@@ -90,6 +89,28 @@ GENERATORS.F1 = [
       answers: [String(p), String(s)],
       link: "https://laerebogimatematik1hhx.systime.dk/?id=222",
       explanation: `Kilometerprisen er hældningen a = ${p}, startgebyret er skæringen b = ${s}. Forskrift: f(x) = ${p}x + ${s}.`
+    };
+  },
+
+  // 6. Omvendt funktion
+  () => {
+    const aVals = [-10, -5, -4, -2, -1, 1, 2, 4, 5, 10];
+    const a = aVals[Math.floor(Math.random() * aVals.length)];
+    const bMult = rnd(-4, 4) * a;
+    const invA = Math.round(1 / a * 1000) / 1000;
+    const invB = -bMult / a;
+    const fStr = `f(x) = ${a}x ${bMult >= 0 ? '+ ' + bMult : '− ' + Math.abs(bMult)}`;
+    const invAStr = fmt(invA);
+    return {
+      type: "fields",
+      text: `Bestem den omvendte funktion til den lineære funktion\n${fStr}`,
+      fields: [
+        { prefix: "f⁻¹(x) =", suffix: "x +" },
+        { suffix: "" }
+      ],
+      answers: [invAStr, String(invB)],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=254#c2741",
+      explanation: `Bytter x og y: x = ${a}y + ${bMult} → y = (x − ${bMult}) / ${a} = ${invAStr}x + ${invB}. Så f⁻¹(x) = ${invAStr}x + ${invB}.`
     };
   },
 
