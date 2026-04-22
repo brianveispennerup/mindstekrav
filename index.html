@@ -907,7 +907,20 @@ function checkInput() {
 function showFeedback(ok, msg) {
   const fb = document.getElementById("feedback");
   fb.className = "feedback " + (ok ? "correct" : "wrong");
-  fb.textContent = (ok ? "Rigtigt! " : "") + msg;
+  fb.innerHTML = "";
+  const msgEl = document.createElement("span");
+  msgEl.textContent = (ok ? "Rigtigt! " : "") + msg;
+  fb.appendChild(msgEl);
+  const q = sessionQs[qIndex];
+  if (q && q.link) {
+    fb.appendChild(document.createElement("br"));
+    const a = document.createElement("a");
+    a.href = q.link;
+    a.target = "_blank";
+    a.textContent = "For mere, se dette eksempel →";
+    a.style.cssText = "color:inherit;font-weight:500;margin-top:4px;display:inline-block;";
+    fb.appendChild(a);
+  }
 }
 function nextQuestion() { qIndex++; if (qIndex >= sessionQs.length) showResult(); else renderQuestion(); }
 function showResult() {
