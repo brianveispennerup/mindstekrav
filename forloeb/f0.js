@@ -8,6 +8,7 @@ GENERATORS.F0 = [
     return {
       type: "input",
       prefix: "x = ±",
+      text: `Løs ligningen x² + ${k} = ${c}.`,
       answer: String(x),
       accept: [String(x), String(-x), "x=" + x, "±" + x],
       explanation: `x² = ${c - k} → x = ±√${c - k} = ±${x}`
