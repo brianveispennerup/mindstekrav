@@ -60,6 +60,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <button class="f-btn" onclick="setCount(999,this)">Alle</button>
     </div>
   </div>
+  <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.8rem;font-size:15px">Start</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -106,7 +107,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     </div>
     <div style="display:flex;gap:8px">
       <button class="primary" onclick="startQuiz()" style="flex:1">Prøv igen</button>
-      <button class="primary" onclick="goHome()" style="flex:1">Vælg forløb</button>
+      <button class="primary" onclick="goHome()" style="flex:1">Hovedmenu</button>
     </div>
   </div>
 </div>
@@ -298,7 +299,7 @@ function init() {
     const btn = document.createElement("button");
     btn.className = "f-btn" + (key === selected ? " active" : "");
     btn.innerHTML = `<span style="font-size:11px;color:#888">${key}</span><br>${name}`;
-    btn.onclick = () => { selectForloeb(key, btn); startQuiz(); };
+    btn.onclick = () => selectForloeb(key, btn);
     grid.appendChild(btn);
   });
 }
@@ -307,11 +308,20 @@ function setCount(n, btn) { maxCount = n; document.querySelectorAll("#count-btns
 function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.remove("active")); document.getElementById(id).classList.add("active"); }
 function goHome() { show("screen-select"); }
 function generateQuestions() {
-  const gens = shuffle([...GENERATORS[selected]]);
+  const gens = [...GENERATORS[selected]];
+  if (maxCount === 999) {
+    // Alle: én opgave fra hver generator, i tilfældig rækkefølge
+    const result = [];
+    shuffle(gens).forEach(gen => {
+      try { const q = gen(); if (q) result.push(q); } catch (e) { }
+    });
+    return result;
+  }
+  const shuffled = shuffle(gens);
   const result = []; let attempts = 0;
   while (result.length < maxCount && attempts < maxCount * 10) {
     attempts++;
-    try { const q = gens[result.length % gens.length](); if (q) result.push(q); } catch (e) { }
+    try { const q = shuffled[result.length % shuffled.length](); if (q) result.push(q); } catch (e) { }
   }
   return result;
 }
