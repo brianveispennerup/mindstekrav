@@ -122,6 +122,7 @@ GENERATORS.F3 = [
       ],
       answers: [String(Q1), String(Q2), String(Q3)],
       accept_tolerance: 2,
+      showQuartileLines: true,
       explanation: `Aflæs ved 25%, 50% og 75% på y-aksen. Q₁ = ${Q1}, m = ${Q2} (median), Q₃ = ${Q3}.`
     };
   },

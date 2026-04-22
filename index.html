@@ -832,7 +832,6 @@ function checkFields() {
     const val = inp ? normalizeAnswer(inp.value.replace(",", ".")) : "";
     const expected = normalizeAnswer(q.answers[i].replace(",", "."));
     let ok = val === expected;
-    // Numerisk tolerance hvis angivet
     if (!ok && q.accept_tolerance) {
       const numVal = parseFloat(val), numExp = parseFloat(expected);
       if (!isNaN(numVal) && !isNaN(numExp) && Math.abs(numVal - numExp) <= q.accept_tolerance) ok = true;
@@ -840,6 +839,36 @@ function checkFields() {
     if (!ok) allOk = false;
   });
   answered = true;
+
+  // Tegn kvartillinjer på grafen hvis det er en kvartilsæt-opgave
+  if (q.showQuartileLines && q.graph) {
+    const plotDivs = document.getElementById("q-graph").querySelectorAll('[id^="plot_"]');
+    if (plotDivs.length > 0) {
+      const plotId = plotDivs[0].id;
+      const percentages = [25, 50, 75];
+      const xRange = [8, 62];
+      // Find x-værdier for hvert kvartil fra de interpolerede data
+      const denseX = q.graph.traces[0].x;
+      const denseY = q.graph.traces[0].y;
+      function findX(p) {
+        let i = 0;
+        while (i < denseY.length - 1 && denseY[i] < p) i++;
+        return denseX[i];
+      }
+      const newTraces = [...q.graph.traces];
+      percentages.forEach(p => {
+        const xVal = findX(p);
+        // Vandret linje fra y-akse til kurven
+        newTraces.push({ x: [xRange[0], xVal], y: [p, p], mode: 'lines', line: { color: '#C0392B', width: 1.5, dash: 'dot' }, hoverinfo: 'skip', showlegend: false });
+        // Lodret linje fra kurven ned til x-akse
+        newTraces.push({ x: [xVal, xVal], y: [0, p], mode: 'lines', line: { color: '#C0392B', width: 1.5, dash: 'dot' }, hoverinfo: 'skip', showlegend: false });
+        // Punkt på kurven
+        newTraces.push({ x: [xVal], y: [p], mode: 'markers', marker: { color: '#C0392B', size: 8 }, hoverinfo: 'skip', showlegend: false });
+      });
+      Plotly.react(plotId, newTraces, q.graph.layout, PLOTLY_CONFIG);
+    }
+  }
+
   if (allOk) { showFeedback(true, q.explanation); correct_count++; }
   else {
     const correct = q.answers.join(", ");
