@@ -453,7 +453,7 @@ function renderQuestion() {
     });
   } else if (q.type === "draw") {
     drawDiv.style.display = "block";
-    document.getElementById('draw-check-btn').style.display = 'none';
+    document.getElementById('draw-check-btn').style.display = 'block';
     document.getElementById('draw-points-info').textContent = 'Ingen punkter valgt endnu.';
     requestAnimationFrame(() => requestAnimationFrame(() => initDrawCanvas(q.drawA, q.drawB, q.drawRange || 5)));
   } else if (q.type === "fields") {
