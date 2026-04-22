@@ -112,9 +112,10 @@ GENERATORS.F6 = [
     return {
       type: "input",
       prefix: "P(X = " + k + ") =",
+      suffix: "%",
       text: `Der kastes med en ${sides}-sidet terning ${n} gange.\nHvad er sandsynligheden for at få præcis ${k} ${face}${k > 1 ? 'ere' : 'er'}?\n(Svar angives med 2 decimaler)`,
-      answer: fmt(prob) + "%",
-      accept: [fmt(prob) + "%", fmt(prob), String(prob)],
+      answer: fmt(prob),
+      accept: [fmt(prob), String(prob)],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
       explanation: `X~b(${n}, ${fmt(p)}). P(X = ${k}) = K(${n},${k}) · ${fmt(p)}^${k} · ${fmt(Math.round((1-p)*100)/100)}^${n-k} = ${fmt(prob)}%`
     };
@@ -155,10 +156,11 @@ GENERATORS.F6 = [
     return {
       type: "input",
       prefix: chosen.text + " ≈",
+      suffix: "%",
       text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for ${chosen.text}.\n(Svar angives med 2 decimaler)`,
       graph,
-      answer: fmt(answer) + "%",
-      accept: [fmt(answer) + "%", fmt(answer), fmt(Math.round(answer * 10) / 10) + "%"],
+      answer: fmt(answer),
+      accept: [fmt(answer), fmt(Math.round(answer * 10) / 10)],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
       explanation: `${chosen.text} ≈ ${fmt(answer)}%.`
     };

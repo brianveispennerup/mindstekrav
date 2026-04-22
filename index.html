@@ -82,7 +82,8 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div id="input-area" style="display:none">
       <div class="input-row">
         <span id="input-prefix" style="font-size:15px;color:#555;white-space:nowrap;display:none"></span>
-        <input type="text" id="answer-input" placeholder="Skriv dit svar..." onkeydown="if(event.key==='Enter')checkInput()">
+        <input type="text" id="answer-input" placeholder="Svar..." onkeydown="if(event.key==='Enter')checkInput()">
+        <span id="input-suffix" style="font-size:15px;color:#555;white-space:nowrap;display:none"></span>
         <button class="primary" onclick="checkInput()">Tjek</button>
       </div>
     </div>
@@ -653,6 +654,9 @@ function renderQuestion() {
     const prefix = document.getElementById("input-prefix");
     if (q.prefix) { prefix.textContent = q.prefix; prefix.style.display = "inline"; }
     else { prefix.textContent = ''; prefix.style.display = "none"; }
+    const suffix = document.getElementById("input-suffix");
+    if (q.suffix) { suffix.textContent = q.suffix; suffix.style.display = "inline"; }
+    else { suffix.textContent = ''; suffix.style.display = "none"; }
     const inp = document.getElementById("answer-input"); inp.value = ""; inp.disabled = false;
     setTimeout(() => inp.focus(), 150);
   }
