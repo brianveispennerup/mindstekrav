@@ -847,7 +847,6 @@ function checkFields() {
       const plotId = plotDivs[0].id;
       const percentages = [25, 50, 75];
       const xRange = [8, 62];
-      // Find x-værdier for hvert kvartil fra de interpolerede data
       const denseX = q.graph.traces[0].x;
       const denseY = q.graph.traces[0].y;
       function findX(p) {
@@ -856,16 +855,32 @@ function checkFields() {
         return denseX[i];
       }
       const newTraces = [...q.graph.traces];
+      const annotations = [];
       percentages.forEach(p => {
         const xVal = findX(p);
-        // Vandret linje fra y-akse til kurven
+        // Vandret linje
         newTraces.push({ x: [xRange[0], xVal], y: [p, p], mode: 'lines', line: { color: '#C0392B', width: 1.5, dash: 'dot' }, hoverinfo: 'skip', showlegend: false });
-        // Lodret linje fra kurven ned til x-akse
+        // Lodret linje
         newTraces.push({ x: [xVal, xVal], y: [0, p], mode: 'lines', line: { color: '#C0392B', width: 1.5, dash: 'dot' }, hoverinfo: 'skip', showlegend: false });
         // Punkt på kurven
         newTraces.push({ x: [xVal], y: [p], mode: 'markers', marker: { color: '#C0392B', size: 8 }, hoverinfo: 'skip', showlegend: false });
+        // Annotation på y-aksen
+        annotations.push({
+          x: xRange[0], y: p, xref: 'x', yref: 'y',
+          text: `${p}%`, showarrow: false,
+          xanchor: 'right', yanchor: 'middle',
+          font: { color: '#C0392B', size: 11, family: 'system-ui' }
+        });
+        // Annotation på x-aksen
+        annotations.push({
+          x: xVal, y: -4, xref: 'x', yref: 'y',
+          text: `${Math.round(xVal)}`, showarrow: false,
+          xanchor: 'center', yanchor: 'top',
+          font: { color: '#C0392B', size: 11, family: 'system-ui' }
+        });
       });
-      Plotly.react(plotId, newTraces, q.graph.layout, PLOTLY_CONFIG);
+      const newLayout = Object.assign({}, q.graph.layout, { annotations });
+      Plotly.react(plotId, newTraces, newLayout, PLOTLY_CONFIG);
     }
   }
 
