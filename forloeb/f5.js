@@ -71,7 +71,7 @@ GENERATORS.F5 = [
       text: `Forklar betydningen af koefficienterne a og c for grafens udseende for følgende andengradspolynomium\nf(x) = ${fmtPoly(a, b, c)}`,
       questions: [
         {
-          label: `a = ${a} er`,
+          label: `a er`,
           options: ["Positiv", "Negativ"],
           correct: aPos ? 0 : 1,
           explanation: `a = ${a} er ${aPos ? 'positiv' : 'negativ'}.`
@@ -83,7 +83,7 @@ GENERATORS.F5 = [
           explanation: `Da a er ${aPos ? 'positiv' : 'negativ'} åbner parablen ${aPos ? 'opad' : 'nedad'}.`
         },
         {
-          label: `c = ${c} er`,
+          label: `c er`,
           options: ["Positiv", "Negativ", "0"],
           correct: c > 0 ? 0 : c < 0 ? 1 : 2,
           explanation: `c = ${c} er ${cSign}.`
