@@ -22,7 +22,8 @@ GENERATORS.F1 = [
   () => {
     const b = rnd(-4, 4);
     const a = rnd(-3, 3) || 1;
-    const fStr = `f(x) = ${a}x${b === 0 ? '' : (b > 0 ? ' + ' + b : ' − ' + Math.abs(b))}`;
+    const aStr = a === 1 ? '' : a === -1 ? '-' : String(a);
+    const fStr = `f(x) = ${aStr}x${b === 0 ? '' : (b > 0 ? ' + ' + b : ' − ' + Math.abs(b))}`;
     return {
       type: "draw",
       text: `Tegn grafen for den lineære funktion med forskriften ${fStr}.\nKlik to punkter på koordinatsystemet som ligger på grafen.\nForklar desuden betydningen af a og b.`,

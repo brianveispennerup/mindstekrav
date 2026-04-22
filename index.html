@@ -358,12 +358,7 @@ function checkDraw() {
   const tol = 0.7;
   const ok1 = Math.abs(pts[0].y - (a * pts[0].x + b)) <= tol;
   const ok2 = Math.abs(pts[1].y - (a * pts[1].x + b)) <= tol;
-  let slopeOk = false;
-  if (pts[0].x !== pts[1].x) {
-    const s = (pts[1].y - pts[0].y) / (pts[1].x - pts[0].x);
-    slopeOk = Math.abs(s - a) <= 0.7;
-  }
-  const ok = (ok1 && ok2) || slopeOk;
+  const ok = ok1 && ok2;
 
   // Tegn korrekt linje i blåt
   const canvas = drawState.canvas;
