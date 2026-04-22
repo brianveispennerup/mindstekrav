@@ -113,6 +113,11 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <div id="table-container" style="overflow-x:auto;margin-bottom:1rem;"></div>
       <button class="primary" onclick="checkTable()">Tjek</button>
     </div>
+    <div id="nulpunkter-area" style="display:none">
+      <div id="nulpunkter-mc" style="margin-bottom:1rem;"></div>
+      <div id="nulpunkter-inputs" style="display:none;margin-bottom:1rem;"></div>
+      <button class="primary" id="nulpunkter-check-btn" onclick="checkNulpunkter()" style="display:none">Tjek</button>
+    </div>
     <div class="feedback" id="feedback"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
@@ -445,7 +450,7 @@ function renderQuestion() {
   document.getElementById("progress-fill").style.width = Math.round(qIndex / sessionQs.length * 100) + "%";
   document.getElementById("q-counter").textContent = (qIndex + 1) + " / " + sessionQs.length;
   document.getElementById("q-forloeb").textContent = FORLOEB[q._forloeb || selected];
-  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : q.type === "pinde" ? "Lav pindediagram" : "Skriv dit svar";
+  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : q.type === "pinde" ? "Lav pindediagram" : q.type === "nulpunkter" ? "Vælg og skriv dit svar" : "Skriv dit svar";
   document.getElementById("q-text").textContent = q.text;
   document.getElementById("feedback").className = "feedback";
   document.getElementById("next-btn").style.display = "none";
@@ -467,9 +472,10 @@ function renderQuestion() {
   const mc2Div = document.getElementById("mc2-area");
   const pindeDiv = document.getElementById("pinde-area");
   const tableDiv = document.getElementById("table-area");
+  const nulpunkterDiv = document.getElementById("nulpunkter-area");
   mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none";
   fieldsDiv.style.display = "none"; mc2Div.style.display = "none";
-  pindeDiv.style.display = "none"; tableDiv.style.display = "none";
+  pindeDiv.style.display = "none"; tableDiv.style.display = "none"; nulpunkterDiv.style.display = "none";
   if (q.type === "mc") {
     q.options.forEach((opt, i) => {
       const btn = document.createElement("button"); btn.className = "mc-option"; btn.textContent = opt;
@@ -549,6 +555,47 @@ function renderQuestion() {
   } else if (q.type === "table") {
     tableDiv.style.display = "block";
     renderInputTable("table-container", q.tableHeaders, q.tableRows, q.tableFooter, q.inputCols, q.answers);
+  } else if (q.type === "nulpunkter") {
+    nulpunkterDiv.style.display = "block";
+    document.getElementById("nulpunkter-inputs").style.display = "none";
+    document.getElementById("nulpunkter-check-btn").style.display = "none";
+    const mcDiv2 = document.getElementById("nulpunkter-mc");
+    mcDiv2.innerHTML = '<p style="font-size:14px;font-weight:500;color:#333;margin-bottom:8px">Hvor mange nulpunkter har funktionen?</p>';
+    [0, 1, 2].forEach(n => {
+      const btn = document.createElement("button");
+      btn.className = "mc-option";
+      btn.textContent = n === 0 ? "Ingen nulpunkter" : n === 1 ? "Præcis ét nulpunkt" : "To nulpunkter";
+      btn.onclick = () => {
+        if (answered) return;
+        document.querySelectorAll("#nulpunkter-mc .mc-option").forEach(b => { b.style.borderColor="#ddd"; b.style.background="#fff"; });
+        btn.style.borderColor = "#185FA5"; btn.style.background = "#E6F1FB";
+        // Vis inputs
+        const inputsDiv = document.getElementById("nulpunkter-inputs");
+        inputsDiv.innerHTML = "";
+        if (n > 0) {
+          inputsDiv.style.display = "block";
+          for (let i = 0; i < n; i++) {
+            const row = document.createElement("div");
+            row.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;";
+            const lbl = document.createElement("span");
+            lbl.textContent = `x${n > 1 ? (i === 0 ? '₁' : '₂') : ''} =`;
+            lbl.style.cssText = "font-size:15px;color:#555;";
+            const inp = document.createElement("input");
+            inp.type = "text"; inp.id = `nulpunkt_${i}`;
+            inp.style.cssText = "width:80px;padding:0.5rem;border:1px solid #ccc;border-radius:6px;font-size:15px;";
+            inp.onkeydown = e => { if (e.key === 'Enter') checkNulpunkter(); };
+            row.appendChild(lbl); row.appendChild(inp);
+            inputsDiv.appendChild(row);
+          }
+          setTimeout(() => { const f = document.getElementById("nulpunkt_0"); if(f) f.focus(); }, 100);
+        } else {
+          inputsDiv.style.display = "none";
+        }
+        document.getElementById("nulpunkter-check-btn").style.display = "block";
+        document.getElementById("nulpunkter-check-btn").dataset.chosen = n;
+      };
+      mcDiv2.appendChild(btn);
+    });
   } else {
     inputDiv.style.display = "block";
     const prefix = document.getElementById("input-prefix");
@@ -610,6 +657,33 @@ function renderInputTable(containerId, headers, rows, footer, inputCols, answers
   container.innerHTML = html;
 }
 
+function checkNulpunkter() {
+  if (answered) return;
+  const q = sessionQs[qIndex];
+  const chosen = parseInt(document.getElementById("nulpunkter-check-btn").dataset.chosen);
+  const correctNum = q.numRoots;
+  let ok = chosen === correctNum;
+  // Tjek også de faktiske nulpunkter hvis eleven valgte > 0
+  if (ok && chosen > 0) {
+    const enteredRoots = [];
+    for (let i = 0; i < chosen; i++) {
+      const inp = document.getElementById(`nulpunkt_${i}`);
+      enteredRoots.push(inp ? normalizeAnswer(inp.value.replace(',', '.')) : '');
+    }
+    const correctRoots = q.roots.map(r => normalizeAnswer(String(r)));
+    // Tjek om alle korrekte rødder er indtastet (uanset rækkefølge)
+    ok = correctRoots.every(r => enteredRoots.includes(r)) && enteredRoots.every(r => correctRoots.includes(r));
+  }
+  answered = true;
+  document.getElementById("nulpunkter-check-btn").style.display = "none";
+  const rootsStr = q.roots ? q.roots.join(' og ') : '';
+  const fullExpl = chosen !== correctNum
+    ? `Forkert antal — funktionen har ${correctNum === 0 ? 'ingen' : correctNum === 1 ? 'præcis ét' : 'to'} nulpunkt${correctNum !== 1 ? 'er' : ''}${rootsStr ? ': x = ' + rootsStr : ''}. ${q.explanation}`
+    : q.explanation;
+  showFeedback(ok, fullExpl);
+  if (ok) correct_count++; else wrong_count++;
+  document.getElementById("next-btn").style.display = "block";
+}
 function checkTable() {
   if (answered) return;
   const q = sessionQs[qIndex];
@@ -913,13 +987,16 @@ function showFeedback(ok, msg) {
   fb.appendChild(msgEl);
   const q = sessionQs[qIndex];
   if (q && q.link) {
-    fb.appendChild(document.createElement("br"));
-    const a = document.createElement("a");
-    a.href = q.link;
-    a.target = "_blank";
-    a.textContent = "🔗 Læs mere her";
-    a.style.cssText = "color:inherit;font-weight:500;margin-top:4px;display:inline-block;";
-    fb.appendChild(a);
+    const links = Array.isArray(q.link) ? q.link : [q.link];
+    links.forEach(href => {
+      fb.appendChild(document.createElement("br"));
+      const a = document.createElement("a");
+      a.href = href;
+      a.target = "_blank";
+      a.textContent = "🔗 Læs mere her";
+      a.style.cssText = "color:inherit;font-weight:500;margin-top:4px;display:inline-block;";
+      fb.appendChild(a);
+    });
   }
 }
 function nextQuestion() { qIndex++; if (qIndex >= sessionQs.length) showResult(); else renderQuestion(); }
