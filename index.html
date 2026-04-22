@@ -377,12 +377,21 @@ function checkMC(chosen, btn, q) {
   else { btn.classList.remove("disabled"); btn.classList.add("wrong"); document.querySelectorAll(".mc-option")[q.correct].classList.remove("disabled"); document.querySelectorAll(".mc-option")[q.correct].classList.add("show-correct"); showFeedback(false, "Forkert. " + q.explanation); wrong_count++; }
   document.getElementById("next-btn").style.display = "block";
 }
+function normalizeAnswer(s) {
+  return s.toLowerCase().trim()
+    .replace(/\s+/g, '')         // fjern alle mellemrum
+    .replace(/−/g, '-')          // unicode minus → bindestreg
+    .replace(/–/g, '-')          // tankestreg → bindestreg
+    .replace(/\*·/g, '')         // fjern gangetegn (7*x → 7x)
+    .replace(/\*/g, '')          // fjern *
+    .replace(/·/g, '');          // fjern ·
+}
 function checkInput() {
   if (answered) return;
   const q = sessionQs[qIndex];
-  const val = document.getElementById("answer-input").value.trim().replace(",", ".");
-  const accepts = q.accept.map(a => a.replace(",", ".").toLowerCase().trim());
-  const ok = accepts.includes(val.toLowerCase());
+  const val = normalizeAnswer(document.getElementById("answer-input").value.replace(",", "."));
+  const accepts = q.accept.map(a => normalizeAnswer(a.replace(",", ".")));
+  const ok = accepts.includes(val);
   answered = true; document.getElementById("answer-input").disabled = true;
   if (ok) { showFeedback(true, q.explanation); correct_count++; }
   else { showFeedback(false, "Forkert — svaret er: " + q.answer + ". " + q.explanation); wrong_count++; }
