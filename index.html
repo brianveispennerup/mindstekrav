@@ -47,8 +47,8 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 
 <div id="screen-select" class="screen active">
   <div class="card">
-    <h1>Mindstekrav — matematiktræner</h1>
-    <p class="sub">Vælg et forløb. Opgaverne genereres med tilfældige tal og interaktive grafer.</p>
+    <h1>Mindstekrav</h1>
+    <p class="sub">Vælg et forløb.</p>
     <div class="forloeb-grid" id="forloeb-grid"></div>
   </div>
   <div class="card">
@@ -60,8 +60,6 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <button class="f-btn" onclick="setCount(999,this)">Alle</button>
     </div>
   </div>
-  <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.8rem;font-size:15px">Start træning</button>
-  <button class="primary" onclick="startAllForloeb()" style="width:100%;padding:0.8rem;font-size:15px;margin-top:8px;border-color:#185FA5;color:#185FA5">Gennemgå alle forløb (overblik)</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -93,7 +91,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div class="feedback" id="feedback"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
-      <button class="primary" onclick="goHome()" style="font-size:13px;color:#999">Afslut</button>
+      <button class="primary" onclick="goHome()" style="font-size:13px;color:#999">Hovedmenu</button>
     </div>
   </div>
 </div>
@@ -300,7 +298,7 @@ function init() {
     const btn = document.createElement("button");
     btn.className = "f-btn" + (key === selected ? " active" : "");
     btn.innerHTML = `<span style="font-size:11px;color:#888">${key}</span><br>${name}`;
-    btn.onclick = () => selectForloeb(key, btn);
+    btn.onclick = () => { selectForloeb(key, btn); startQuiz(); };
     grid.appendChild(btn);
   });
 }
