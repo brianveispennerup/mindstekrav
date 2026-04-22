@@ -184,85 +184,147 @@ let drawState = { a: 0, b: 0, pts: [], plotId: '', xRange: [-6, 6], yRange: [-12
 function initDrawCanvas(a, b, range) {
   range = range || 5;
   drawState.a = a; drawState.b = b; drawState.pts = [];
+  drawState.xRange = [-range, range]; drawState.yRange = [-range, range];
+  drawState.range = range;
+
   const wrap = document.getElementById('draw-canvas-wrap');
   wrap.innerHTML = '';
-  const plotId = 'dp_' + Date.now();
-  drawState.plotId = plotId;
-  const div = document.createElement('div');
-  div.id = plotId;
-  wrap.appendChild(div);
-  const xr = [-range, range];
-  drawState.xRange = xr; drawState.yRange = [-range, range];
-  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-    height: 340, dragmode: false,
-    xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: xr, dtick: 1 }),
-    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-range, range], dtick: 1 })
-  });
-  // Usynligt baggrundstrace så plotly_click virker overalt i grafen
-  const bgTrace = {
-    x: [-range, range], y: [-range, range],
-    mode: 'markers', marker: { opacity: 0, size: 1 },
-    hoverinfo: 'none', showlegend: false
-  };
-  Plotly.newPlot(plotId, [bgTrace], layout, { responsive: true, displayModeBar: false }).then(() => {
-    document.getElementById(plotId).on('plotly_click', function(data) {
-      if (answered) return;
-      if (!data || !data.points || !data.points[0]) return;
-      const px = Math.round(data.points[0].x);
-      const py = Math.round(data.points[0].y);
-      if (drawState.pts.length < 2) {
-        drawState.pts.push({ x: px, y: py });
-        updateDrawPlot();
-      }
-    });
-    // Touch support til mobil
-    const plotEl = document.getElementById(plotId);
-    plotEl.addEventListener('touchend', function(e) {
-      if (answered || drawState.pts.length >= 2) return;
-      e.preventDefault();
-      const touch = e.changedTouches[0];
-      const rect = plotEl.getBoundingClientRect();
-      const gd = plotEl._fullLayout;
-      const xaxis = gd.xaxis, yaxis = gd.yaxis;
-      const relX = touch.clientX - rect.left;
-      const relY = touch.clientY - rect.top;
-      const px = Math.round(xaxis.p2d(relX - gd.margin.l));
-      const py = Math.round(yaxis.p2d(relY - gd.margin.t));
-      if (px >= xr[0] && px <= xr[1] && py >= -range && py <= range) {
-        drawState.pts.push({ x: px, y: py });
-        updateDrawPlot();
-      }
-    }, { passive: false });
-  });
+  const canvas = document.createElement('canvas');
+  canvas.id = 'drawCanvas';
+  canvas.style.cssText = 'width:100%;height:320px;display:block;cursor:crosshair;touch-action:none;';
+  wrap.appendChild(canvas);
+
+  // Sæt canvas størrelse
+  const size = Math.min(wrap.clientWidth || 400, 500);
+  canvas.width = size; canvas.height = size;
+  drawState.canvas = canvas;
+  drawState.size = size;
+
+  drawGrid();
+
+  function getCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let cx, cy;
+    if (e.touches) {
+      cx = (e.touches[0].clientX - rect.left) * scaleX;
+      cy = (e.touches[0].clientY - rect.top) * scaleY;
+    } else {
+      cx = (e.clientX - rect.left) * scaleX;
+      cy = (e.clientY - rect.top) * scaleY;
+    }
+    const margin = 40;
+    const plotW = canvas.width - margin * 2;
+    const plotH = canvas.height - margin * 2;
+    const mx = Math.round(((cx - margin) / plotW) * (range * 2) - range);
+    const my = Math.round(range - ((cy - margin) / plotH) * (range * 2));
+    return { x: mx, y: my };
+  }
+
+  function handleClick(e) {
+    if (answered || drawState.pts.length >= 2) return;
+    e.preventDefault();
+    const pt = getCoords(e);
+    if (pt.x < -range || pt.x > range || pt.y < -range || pt.y > range) return;
+    drawState.pts.push(pt);
+    drawGrid();
+    const info = document.getElementById('draw-points-info');
+    if (drawState.pts.length === 1) info.textContent = `Punkt 1: (${pt.x}, ${pt.y}). Klik endnu et punkt.`;
+    if (drawState.pts.length === 2) info.textContent = `Punkt 1: (${drawState.pts[0].x}, ${drawState.pts[0].y}), Punkt 2: (${pt.x}, ${pt.y}).`;
+  }
+
+  canvas.addEventListener('click', handleClick);
+  canvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    handleClick(e.changedTouches ? { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY, preventDefault: ()=>{} } : e);
+  }, { passive: false });
 }
 
-function updateDrawPlot() {
-  const pts = drawState.pts;
-  const info = document.getElementById('draw-points-info');
-  if (pts.length === 0) { info.textContent = 'Ingen punkter valgt endnu.'; return; }
-  if (pts.length === 1) info.textContent = `Punkt 1 valgt: (${pts[0].x}, ${pts[0].y}). Klik endnu et punkt.`;
-  if (pts.length === 2) info.textContent = `Punkt 1: (${pts[0].x}, ${pts[0].y}), Punkt 2: (${pts[1].x}, ${pts[1].y}). Klik "Tjek linje".`;
-  const traces = [];
-  traces.push({ x: pts.map(p => p.x), y: pts.map(p => p.y), mode: 'markers', marker: { color: '#C0392B', size: 10 } });
-  if (pts.length === 2 && pts[0].x !== pts[1].x) {
-    const s = (pts[1].y - pts[0].y) / (pts[1].x - pts[0].x);
-    const xr = drawState.xRange;
-    traces.push({ x: [xr[0], xr[1]], y: [pts[0].y + s * (xr[0] - pts[0].x), pts[0].y + s * (xr[1] - pts[0].x)], mode: 'lines', line: { color: '#C0392B', width: 2 } });
+function drawGrid() {
+  const canvas = drawState.canvas;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const margin = 40;
+  const range = drawState.range || 5;
+  const plotW = size - margin * 2;
+  const plotH = size - margin * 2;
+
+  function toCanvas(mx, my) {
+    return {
+      x: margin + ((mx + range) / (range * 2)) * plotW,
+      y: margin + ((range - my) / (range * 2)) * plotH
+    };
   }
-  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-    height: 300, dragmode: false,
-    xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: drawState.xRange, dtick: 1 }),
-    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: drawState.yRange, dtick: 1 })
-  });
-  Plotly.react(drawState.plotId, traces, layout, { responsive: true, displayModeBar: false });
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Baggrund
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(margin, margin, plotW, plotH);
+
+  // Grid
+  ctx.strokeStyle = '#e8e8e2';
+  ctx.lineWidth = 1;
+  for (let i = -range; i <= range; i++) {
+    const { x } = toCanvas(i, 0);
+    const { y } = toCanvas(0, i);
+    ctx.beginPath(); ctx.moveTo(x, margin); ctx.lineTo(x, margin + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(margin + plotW, y); ctx.stroke();
+  }
+
+  // Akser
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+  const o = toCanvas(0, 0);
+  ctx.beginPath(); ctx.moveTo(margin, o.y); ctx.lineTo(margin + plotW, o.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(o.x, margin); ctx.lineTo(o.x, margin + plotH); ctx.stroke();
+
+  // Tal på akserne
+  ctx.fillStyle = '#555'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+  for (let i = -range; i <= range; i++) {
+    if (i === 0) continue;
+    const { x } = toCanvas(i, 0);
+    ctx.fillText(i, x, margin + plotH + 14);
+    const { y } = toCanvas(0, i);
+    ctx.textAlign = 'right';
+    ctx.fillText(i, margin - 4, y + 4);
+    ctx.textAlign = 'center';
+  }
+
+  // Tegn elevens punkter og linje
+  const pts = drawState.pts;
+  if (pts.length >= 1) {
+    pts.forEach(pt => {
+      const c = toCanvas(pt.x, pt.y);
+      ctx.fillStyle = '#C0392B';
+      ctx.beginPath(); ctx.arc(c.x, c.y, 6, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+  if (pts.length === 2) {
+    const c1 = toCanvas(pts[0].x, pts[0].y);
+    const c2 = toCanvas(pts[1].x, pts[1].y);
+    ctx.strokeStyle = '#C0392B'; ctx.lineWidth = 2;
+    // Forlæng linjen til kanten
+    if (pts[0].x !== pts[1].x) {
+      const slope = (pts[1].y - pts[0].y) / (pts[1].x - pts[0].x);
+      const yLeft = pts[0].y + slope * (-range - pts[0].x);
+      const yRight = pts[0].y + slope * (range - pts[0].x);
+      const cl = toCanvas(-range, yLeft), cr = toCanvas(range, yRight);
+      ctx.beginPath(); ctx.moveTo(cl.x, cl.y); ctx.lineTo(cr.x, cr.y); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(c1.x, margin); ctx.lineTo(c1.x, margin + plotH); ctx.stroke();
+    }
+  }
 }
+
+function updateDrawPlot() { drawGrid(); }
 
 function resetDrawPoints() {
   if (answered) return;
   drawState.pts = [];
-  document.getElementById('draw-check-btn').style.display = 'none';
   document.getElementById('draw-points-info').textContent = 'Ingen punkter valgt endnu.';
-  updateDrawPlot();
+  drawGrid();
 }
 
 function checkDraw() {
@@ -278,22 +340,23 @@ function checkDraw() {
     slopeOk = Math.abs(s - a) <= 0.7;
   }
   const ok = (ok1 && ok2) || slopeOk;
-  document.getElementById('draw-check-btn').style.display = 'none';
-  const xr = drawState.xRange;
-  const correctTrace = { x: [xr[0], xr[1]], y: [a * xr[0] + b, a * xr[1] + b], mode: 'lines', line: { color: '#185FA5', width: 2.5, dash: 'dash' }, name: 'Korrekt' };
-  const dotTrace = { x: pts.map(p => p.x), y: pts.map(p => p.y), mode: 'markers', marker: { color: '#C0392B', size: 10 }, name: 'Dine punkter' };
-  const userTraces = [];
-  if (pts[0].x !== pts[1].x) {
-    const s = (pts[1].y - pts[0].y) / (pts[1].x - pts[0].x);
-    userTraces.push({ x: [xr[0], xr[1]], y: [pts[0].y + s * (xr[0] - pts[0].x), pts[0].y + s * (xr[1] - pts[0].x)], mode: 'lines', line: { color: '#C0392B', width: 2 }, name: 'Din linje' });
+
+  // Tegn korrekt linje i blåt
+  const canvas = drawState.canvas;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width, margin = 40, range = drawState.range || 5;
+  const plotW = size - margin * 2;
+  const plotH = size - margin * 2;
+  function toCanvas(mx, my) {
+    return { x: margin + ((mx + range) / (range * 2)) * plotW, y: margin + ((range - my) / (range * 2)) * plotH };
   }
-  const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-    height: 300, dragmode: false, showlegend: true,
-    legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ddd', borderwidth: 1 },
-    xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: xr, dtick: 1 }),
-    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: drawState.yRange, dtick: 1 })
-  });
-  Plotly.react(drawState.plotId, [dotTrace, ...userTraces, correctTrace], layout, { responsive: true, displayModeBar: false });
+  const yLeft = a * (-range) + b, yRight = a * range + b;
+  const cl = toCanvas(-range, yLeft), cr = toCanvas(range, yRight);
+  ctx.strokeStyle = '#185FA5'; ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(cl.x, cl.y); ctx.lineTo(cr.x, cr.y); ctx.stroke();
+  ctx.setLineDash([]);
+
   const expl = (ok ? '' : 'Den stiplede blå linje viser den korrekte graf. ') +
     `a = ${a} er hældningen — grafen ${a > 0 ? 'stiger' : 'falder'} ${Math.abs(a)} for hver enhed ad x-aksen. ` +
     `b = ${b} er skæringen med y-aksen: grafen skærer y-aksen i punktet (0, ${b}).`;
