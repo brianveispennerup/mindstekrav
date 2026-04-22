@@ -827,7 +827,13 @@ function checkFields() {
     if (inp) inp.disabled = true;
     const val = inp ? normalizeAnswer(inp.value.replace(",", ".")) : "";
     const expected = normalizeAnswer(q.answers[i].replace(",", "."));
-    if (val !== expected) allOk = false;
+    let ok = val === expected;
+    // Numerisk tolerance hvis angivet
+    if (!ok && q.accept_tolerance) {
+      const numVal = parseFloat(val), numExp = parseFloat(expected);
+      if (!isNaN(numVal) && !isNaN(numExp) && Math.abs(numVal - numExp) <= q.accept_tolerance) ok = true;
+    }
+    if (!ok) allOk = false;
   });
   answered = true;
   if (allOk) { showFeedback(true, q.explanation); correct_count++; }

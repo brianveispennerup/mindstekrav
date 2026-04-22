@@ -70,13 +70,11 @@ GENERATORS.F3 = [
   () => {
     const ages = [10, 20, 25, 30, 35, 40, 50, 60];
     const cf = [rnd(0, 5), rnd(10, 20), rnd(25, 35), rnd(45, 58), rnd(65, 75), rnd(80, 88), rnd(95, 98), 100];
-    function readQ(p) { let i = 0; while (i < cf.length - 1 && cf[i] < p) i++; return ages[i]; }
-    const Q1 = readQ(25), Q2 = readQ(50), Q3 = readQ(75);
 
-    // Interpolér mange punkter så hover virker overalt på linjen
+    // Interpolér mange punkter
     const denseX = [], denseY = [];
     for (let i = 0; i < ages.length - 1; i++) {
-      const steps = 20;
+      const steps = 50;
       for (let s = 0; s < steps; s++) {
         const t = s / steps;
         denseX.push(Math.round((ages[i] + t * (ages[i+1] - ages[i])) * 10) / 10);
@@ -86,13 +84,20 @@ GENERATORS.F3 = [
     denseX.push(ages[ages.length-1]);
     denseY.push(cf[cf.length-1]);
 
+    // Læs kvartiler fra de interpolerede punkter
+    function readQ(p) {
+      let i = 0;
+      while (i < denseY.length - 1 && denseY[i] < p) i++;
+      return Math.round(denseX[i]);
+    }
+    const Q1 = readQ(25), Q2 = readQ(50), Q3 = readQ(75);
+
     const t1 = {
       x: denseX, y: denseY,
       mode: 'lines',
       line: { color: '#185FA5', width: 2.5 },
       hovertemplate: 'Alder: %{x}<br>Summeret frekvens: %{y}%<extra></extra>'
     };
-    // Markerede datapunkter
     const t2 = {
       x: ages, y: cf,
       mode: 'markers',
@@ -116,6 +121,7 @@ GENERATORS.F3 = [
         { prefix: "Q₃ =", suffix: "" }
       ],
       answers: [String(Q1), String(Q2), String(Q3)],
+      accept_tolerance: 2,
       explanation: `Aflæs ved 25%, 50% og 75% på y-aksen. Q₁ = ${Q1}, m = ${Q2} (median), Q₃ = ${Q3}.`
     };
   },
