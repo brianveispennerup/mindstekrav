@@ -11,6 +11,7 @@ GENERATORS.F0 = [
       text: `Løs ligningen x² + ${k} = ${c}.`,
       answer: String(x),
       accept: [String(x), String(-x), "x=" + x, "±" + x],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=296#c426",
       explanation: `x² = ${c - k} → x = ±√${c - k} = ±${x}`
     };
   },
@@ -29,6 +30,7 @@ GENERATORS.F0 = [
       text: `Reducér følgende udtryk mest muligt: ${a}(${bx}x − ${by}y) − (${cx}x − ${cy}y)`,
       answer: ans,
       accept: [ans, ans.replace(/ /g, '')],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=199",
       explanation: `= ${a * bx}x − ${a * by}y − ${cx}x + ${cy}y = ${ans}`
     };
   },
@@ -42,6 +44,7 @@ GENERATORS.F0 = [
       text: `Løs ligningen ${bv} · ${base}ˣ = ${rhs}.`,
       answer: String(exp),
       accept: [String(exp), "x=" + exp, "x = " + exp],
+      link: "https://laerebogimatematik1hhx.systime.dk/?id=229#c1246",
       explanation: `${bv} · ${base}ˣ = ${rhs} → ${base}ˣ = ${rhs / bv} = ${base}^${exp} → x = ${exp}`
     };
   },
