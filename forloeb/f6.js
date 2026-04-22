@@ -120,7 +120,7 @@ GENERATORS.F6 = [
     };
   },
 
-  // 6. Aflæs P(X = k) fra binomialfordeling graf
+  // 6. Aflæs sandsynlighed fra binomialfordeling graf
   () => {
     const n = rnd(10, 20);
     const p = rndF(0.1, 0.5, 1);
@@ -129,13 +129,23 @@ GENERATORS.F6 = [
     const probs = Array.from({ length: n + 1 }, (_, k) =>
       Math.round(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k) * 1000) / 1000
     );
-    const k = rnd(1, Math.round(n * p) + 2);
-    const answer = Math.round(probs[k] * 10000) / 100;
+    const mid = Math.round(n * p);
+    const k = rnd(1, Math.min(mid + 2, n - 1));
+    // Vælg tilfældig ulighed
+    const types = [
+      { text: `P(X = ${k})`, val: probs[k] },
+      { text: `P(X ≤ ${k})`, val: probs.slice(0, k + 1).reduce((a, b) => a + b, 0) },
+      { text: `P(X ≥ ${k})`, val: probs.slice(k).reduce((a, b) => a + b, 0) },
+      { text: `P(X < ${k})`, val: probs.slice(0, k).reduce((a, b) => a + b, 0) },
+      { text: `P(X > ${k})`, val: probs.slice(k + 1).reduce((a, b) => a + b, 0) },
+    ];
+    const chosen = types[rnd(0, types.length - 1)];
+    const answer = Math.round(chosen.val * 10000) / 100;
     const t = {
       x: Array.from({ length: n + 1 }, (_, i) => i),
       y: probs,
       type: 'bar',
-      marker: { color: probs.map((_, i) => i === k ? '#C0392B' : '#185FA5') }
+      marker: { color: '#185FA5' }
     };
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
       xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { title: { text: 'Antal succeser' }, dtick: 1 }),
@@ -144,13 +154,13 @@ GENERATORS.F6 = [
     const graph = makePlotSpec([t], layout);
     return {
       type: "input",
-      prefix: "P(X = " + k + ") ≈",
-      text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for at få præcis ${k} succeser.\n(Svar angives med 2 decimaler)`,
+      prefix: chosen.text + " ≈",
+      text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for ${chosen.text}.\n(Svar angives med 2 decimaler)`,
       graph,
       answer: fmt(answer) + "%",
       accept: [fmt(answer) + "%", fmt(answer), fmt(Math.round(answer * 10) / 10) + "%"],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
-      explanation: `Den røde søjle viser P(X = ${k}) ≈ ${fmt(answer)}%.`
+      explanation: `${chosen.text} ≈ ${fmt(answer)}%.`
     };
   },
 
