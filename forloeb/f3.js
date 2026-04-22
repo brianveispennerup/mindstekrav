@@ -72,15 +72,17 @@ GENERATORS.F3 = [
     const cf = [rnd(0, 5), rnd(10, 20), rnd(25, 35), rnd(45, 58), rnd(65, 75), rnd(80, 88), rnd(95, 98), 100];
     function readQ(p) { let i = 0; while (i < cf.length - 1 && cf[i] < p) i++; return ages[i]; }
     const Q1 = readQ(25), Q2 = readQ(50), Q3 = readQ(75);
-    const t1 = { x: ages, y: cf, mode: 'lines+markers', line: { color: '#185FA5', width: 2.5 }, marker: { color: '#185FA5', size: 7 } };
+    const t1 = { x: ages, y: cf, mode: 'lines+markers', line: { color: '#185FA5', width: 2.5 }, marker: { color: '#185FA5', size: 7 }, hovertemplate: 'Alder: %{x}<br>Summeret frekvens: %{y}%<extra></extra>' };
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
       xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [8, 62], title: { text: 'Alder' } }),
-      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-2, 105], dtick: 10, title: { text: 'Summeret frekvens i %' } })
+      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [-2, 105], dtick: 10, title: { text: 'Summeret frekvens i %' } }),
+      hovermode: 'x unified',
+      hoverlabel: { bgcolor: '#fff', bordercolor: '#185FA5', font: { size: 13, color: '#111' } }
     });
     const graph = makePlotSpec([t1], layout);
     return {
       type: "fields",
-      text: `Nedenstående graf viser aldersfordelingen af dagpengemodtagere i Danmark.\nAflæs kvartilsættet ud fra figuren og fortolk dette.`,
+      text: `Nedenstående graf viser aldersfordelingen af dagpengemodtagere i Danmark.\nAflæs kvartilsættet ud fra figuren og fortolk dette.\n(Hold musen over grafen for at aflæse koordinater)`,
       graph,
       fields: [
         { prefix: "Q₁ =", suffix: "" },
