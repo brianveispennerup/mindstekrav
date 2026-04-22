@@ -86,4 +86,72 @@ GENERATORS.F6 = [
     };
   },
 
+  // 4. Forklar notation X~b(n, p)
+  () => {
+    const n = rnd(3, 15);
+    const p = rndF(0.1, 0.9, 1);
+    return {
+      type: "selvevaluering",
+      text: `Forklar betydningen af notationen\nX~b(n = ${n}, p = ${fmt(p)})`,
+      modelsvar: `X er en stokastisk variabel der følger en binomialfordeling.\nn = ${n} er antallet af uafhængige forsøg.\np = ${fmt(p)} er sandsynligheden for succes i hvert enkelt forsøg.\nDet betyder at X tæller antallet af succeser i ${n} forsøg, hvor sandsynligheden for succes er ${fmt(p)} i hvert forsøg.`,
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
+      explanation: `X~b(n,p) betyder binomialfordeling med n forsøg og sandsynlighed p for succes.`
+    };
+  },
+
+  // 5. Beregn binomialsandsynlighed P(X = k) i procent
+  () => {
+    const n = rnd(6, 15);
+    const sides = rnd(4, 8);
+    const face = rnd(1, sides);
+    const p = Math.round(1 / sides * 100) / 100;
+    const k = rnd(1, Math.min(5, n - 1));
+    function fak(x) { return x <= 1 ? 1 : x * fak(x - 1); }
+    function C(nn, kk) { return fak(nn) / (fak(kk) * fak(nn - kk)); }
+    const prob = Math.round(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k) * 10000) / 100;
+    return {
+      type: "input",
+      prefix: "P(X = " + k + ") =",
+      text: `Der kastes med en ${sides}-sidet terning ${n} gange.\nHvad er sandsynligheden for at få præcis ${k} ${face}${k > 1 ? 'ere' : 'er'}?\n(Svar angives med 2 decimaler)`,
+      answer: fmt(prob) + "%",
+      accept: [fmt(prob) + "%", fmt(prob), String(prob)],
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
+      explanation: `X~b(${n}, ${fmt(p)}). P(X = ${k}) = K(${n},${k}) · ${fmt(p)}^${k} · ${fmt(Math.round((1-p)*100)/100)}^${n-k} = ${fmt(prob)}%`
+    };
+  },
+
+  // 6. Aflæs P(X = k) fra binomialfordeling graf
+  () => {
+    const n = rnd(10, 20);
+    const p = rndF(0.1, 0.5, 1);
+    function fak(x) { return x <= 1 ? 1 : x * fak(x - 1); }
+    function C(nn, kk) { return fak(nn) / (fak(kk) * fak(nn - kk)); }
+    const probs = Array.from({ length: n + 1 }, (_, k) =>
+      Math.round(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k) * 1000) / 1000
+    );
+    const k = rnd(1, Math.round(n * p) + 2);
+    const answer = Math.round(probs[k] * 10000) / 100;
+    const t = {
+      x: Array.from({ length: n + 1 }, (_, i) => i),
+      y: probs,
+      type: 'bar',
+      marker: { color: probs.map((_, i) => i === k ? '#C0392B' : '#185FA5') }
+    };
+    const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
+      xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { title: { text: 'Antal succeser' }, dtick: 1 }),
+      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { title: { text: 'Sandsynlighed' } })
+    });
+    const graph = makePlotSpec([t], layout);
+    return {
+      type: "input",
+      prefix: "P(X = " + k + ") ≈",
+      text: `På figuren ses en binomialfordeling hvor n = ${n} og p = ${fmt(p)}.\nUd fra figuren vurdér cirka hvad sandsynligheden er for at få præcis ${k} succeser.\n(Svar angives med 2 decimaler)`,
+      graph,
+      answer: fmt(answer) + "%",
+      accept: [fmt(answer) + "%", fmt(answer), fmt(Math.round(answer * 10) / 10) + "%"],
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=163#c1029",
+      explanation: `Den røde søjle viser P(X = ${k}) ≈ ${fmt(answer)}%.`
+    };
+  },
+
 ];

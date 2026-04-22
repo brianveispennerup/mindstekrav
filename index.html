@@ -123,6 +123,21 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <div id="sandsynlighed-prob" style="margin-bottom:1rem;"></div>
       <button class="primary" onclick="checkSandsynlighed()">Tjek</button>
     </div>
+    <div id="selvevaluering-area" style="display:none">
+      <textarea id="selvevaluering-input" placeholder="Skriv dit svar her..." style="width:100%;min-height:100px;padding:0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px;font-family:system-ui;resize:vertical;margin-bottom:0.75rem;"></textarea>
+      <button class="primary" id="selvevaluering-tjek-btn" onclick="checkSelvevaluering()">Tjek</button>
+      <div id="selvevaluering-modelsvar" style="display:none;margin-top:0.75rem;">
+        <div style="background:#EAF3DE;border:1px solid #3B6D11;border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.75rem;">
+          <p style="font-size:12px;font-weight:600;color:#27500A;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;">Modelsvar</p>
+          <p id="selvevaluering-modelsvar-text" style="font-size:14px;color:#27500A;line-height:1.6;"></p>
+        </div>
+        <p style="font-size:14px;color:#555;margin-bottom:8px;">Havde du det rigtige?</p>
+        <div style="display:flex;gap:8px;">
+          <button class="primary" onclick="evaluerSelv(true)" style="flex:1;border-color:#3B6D11;color:#27500A;">✓ Jeg havde det</button>
+          <button class="primary" onclick="evaluerSelv(false)" style="flex:1;border-color:#A32D2D;color:#791F1F;">✗ Jeg havde det ikke</button>
+        </div>
+      </div>
+    </div>
     <div class="feedback" id="feedback"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
@@ -156,7 +171,7 @@ const FORLOEB = {
   F3: "Eksponentielle funktioner",
   F4: "Finansiel regning",
   F5: "Andengradsfunktioner",
-  F6: "Sandsynlighedsregning"
+  F6: "Sandsynlighedsregning og fordelinger"
 };
 
 // ---- Hjælpefunktioner ----
@@ -452,7 +467,7 @@ function renderQuestion() {
   document.getElementById("progress-fill").style.width = Math.round(qIndex / sessionQs.length * 100) + "%";
   document.getElementById("q-counter").textContent = (qIndex + 1) + " / " + sessionQs.length;
   document.getElementById("q-forloeb").textContent = FORLOEB[q._forloeb || selected];
-  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : q.type === "pinde" ? "Lav pindediagram" : q.type === "nulpunkter" ? "Vælg og skriv dit svar" : q.type === "sandsynlighed" ? "Udfyld tabel og beregn" : "Skriv dit svar";
+  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : q.type === "pinde" ? "Lav pindediagram" : q.type === "nulpunkter" ? "Vælg og skriv dit svar" : q.type === "sandsynlighed" ? "Udfyld tabel og beregn" : q.type === "selvevaluering" ? "Skriv dit svar" : "Skriv dit svar";
   document.getElementById("q-text").textContent = q.text;
   document.getElementById("feedback").className = "feedback";
   document.getElementById("next-btn").style.display = "none";
@@ -476,10 +491,11 @@ function renderQuestion() {
   const tableDiv = document.getElementById("table-area");
   const nulpunkterDiv = document.getElementById("nulpunkter-area");
   const sandsynlighedDiv = document.getElementById("sandsynlighed-area");
+  const selvDiv = document.getElementById("selvevaluering-area");
   mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none";
   fieldsDiv.style.display = "none"; mc2Div.style.display = "none";
   pindeDiv.style.display = "none"; tableDiv.style.display = "none";
-  nulpunkterDiv.style.display = "none"; sandsynlighedDiv.style.display = "none";
+  nulpunkterDiv.style.display = "none"; sandsynlighedDiv.style.display = "none"; selvDiv.style.display = "none";
   if (q.type === "mc") {
     q.options.forEach((opt, i) => {
       const btn = document.createElement("button"); btn.className = "mc-option"; btn.textContent = opt;
@@ -600,6 +616,13 @@ function renderQuestion() {
       };
       mcDiv2.appendChild(btn);
     });
+  } else if (q.type === "selvevaluering") {
+    selvDiv.style.display = "block";
+    const ta = document.getElementById("selvevaluering-input");
+    ta.value = ""; ta.disabled = false;
+    document.getElementById("selvevaluering-modelsvar").style.display = "none";
+    document.getElementById("selvevaluering-tjek-btn").style.display = "block";
+    setTimeout(() => ta.focus(), 150);
   } else if (q.type === "sandsynlighed") {
     sandsynlighedDiv.style.display = "block";
     const tbl = document.getElementById("sandsynlighed-table");
@@ -686,6 +709,23 @@ function renderInputTable(containerId, headers, rows, footer, inputCols, answers
   container.innerHTML = html;
 }
 
+function checkSelvevaluering() {
+  const ta = document.getElementById("selvevaluering-input");
+  if (!ta || ta.value.trim() === '') return;
+  ta.disabled = true;
+  document.getElementById("selvevaluering-tjek-btn").style.display = "none";
+  const q = sessionQs[qIndex];
+  document.getElementById("selvevaluering-modelsvar-text").textContent = q.modelsvar;
+  document.getElementById("selvevaluering-modelsvar").style.display = "block";
+}
+function evaluerSelv(ok) {
+  if (answered) return;
+  answered = true;
+  const q = sessionQs[qIndex];
+  showFeedback(ok, ok ? q.explanation : "Se modelsvaret ovenfor. " + q.explanation);
+  if (ok) correct_count++; else wrong_count++;
+  document.getElementById("next-btn").style.display = "block";
+}
 function checkSandsynlighed() {
   if (answered) return;
   const q = sessionQs[qIndex];
