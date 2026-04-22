@@ -4,12 +4,16 @@ GENERATORS.F2 = [
   // 1. Begyndelsesværdi og vækstrate
   () => {
     const b = rnd(2, 50), a = rndF(1.05, 1.5, 2);
+    const vækst = Math.round((a - 1) * 100);
     return {
-      type: "input",
+      type: "fields",
       text: `En eksponentiel funktion har følgende forskrift:\nf(x) = ${b} · ${fmt(a)}ˣ\nHvad er funktionens begyndelsesværdi og vækstrate?`,
-      answer: String(b),
-      accept: [String(b)],
-      explanation: `Begyndelsesværdien er f(0) = ${b} · 1 = ${b}. Vækstraten r = ${fmt(a)} − 1 = ${fmt(Math.round((a - 1) * 100))}%.`
+      fields: [
+        { prefix: "Begyndelsesværdi =", suffix: "" },
+        { prefix: "Vækstrate =", suffix: "%" }
+      ],
+      answers: [String(b), String(vækst)],
+      explanation: `Begyndelsesværdien er f(0) = ${b} · 1 = ${b}. Vækstraten r = ${fmt(a)} − 1 = ${vækst}%.`
     };
   },
 
@@ -26,7 +30,7 @@ GENERATORS.F2 = [
     const b3 = b + rnd(2, 6), a3 = rising ? rndF(1.1, 1.6, 2) : rndF(0.5, 0.9, 2);
     return {
       type: "mc",
-      text: `Grafen for en eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nBestem hvilken af de 3 følgende forskrifter, der svarer til grafen.\nf(x) = ${b} · ${fmt(a)}ˣ\ng(x) = ${b} · ${fmt(a2)}ˣ\nh(x) = ${b3} · ${fmt(a3)}ˣ`,
+      text: `Grafen for en eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nBestem hvilken af de 3 følgende forskrifter, der svarer til grafen.`,
       graph,
       options: [`f(x) = ${b} · ${fmt(a)}ˣ`, `g(x) = ${b} · ${fmt(a2)}ˣ`, `h(x) = ${b3} · ${fmt(a3)}ˣ`],
       correct: 0,
@@ -34,42 +38,50 @@ GENERATORS.F2 = [
     };
   },
 
-  // 3. Aflæs fordoblingskonstanten fra graf
+  // 3. Aflæs fordoblingskonstanten fra graf — altid voksende, helt tal T₂
   () => {
-    const b = rndF(1, 4, 1), a = rndF(1.15, 1.5, 2);
-    const T = Math.round(Math.log(2) / Math.log(a) * 10) / 10;
-    const xMax = Math.ceil(T * 3.5);
+    const T = rnd(2, 6); // T₂ er et helt tal 2-6
+    const a = Math.round(Math.pow(2, 1/T) * 100) / 100;
+    const b = rndF(1, 5, 1);
+    const xMax = T * 4;
     const fn = x => b * Math.pow(a, x);
     const t1 = makeFuncTrace(fn, 0, xMax, '#185FA5');
     const tM = makeScatterTrace([T], [fn(T)], '#C0392B', 10);
     const graph = plotLines([t1, tM], [0, xMax], [0, fn(xMax) * 1.1]);
     return {
       type: "input",
-      text: `Grafen for en voksende eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nAflæs fordoblingskonstanten. (1 decimal)`,
+      prefix: "T₂ =",
+      text: `Grafen for en voksende eksponentiel funktion er tegnet i nedenstående koordinatsystem.\nAflæs fordoblingskonstanten.`,
       graph,
-      answer: fmt(T),
-      accept: [fmt(T), String(T)],
-      explanation: `T₂ aflæses som den x-værdi hvor funktionen er fordoblet. T₂ = ${fmt(T)}.`
+      answer: String(T),
+      accept: [String(T)],
+      explanation: `Fordoblingskonstanten T₂ aflæses som den x-værdi hvor funktionsværdien er fordoblet. T₂ = ${T}.`
     };
   },
 
-  // 4. Voksende eller aftagende — begrund
+  // 4. Voksende eller aftagende — mc2
   () => {
-    const rising = Math.random() > 0.5;
-    const a = rising ? rndF(1.1, 1.8, 2) : rndF(0.5, 0.9, 2);
-    const a2 = rising ? rndF(0.5, 0.9, 2) : rndF(1.1, 1.8, 2);
-    const b = rnd(2, 20), b2 = rnd(2, 20);
+    const a1 = rndF(0.5, 0.9, 2);  // f er altid aftagende
+    const a2 = rndF(1.1, 1.8, 2);  // g er altid voksende
+    const b1 = rnd(2, 20), b2 = rnd(2, 20);
     return {
-      type: "mc",
-      text: `Lad f(x) = ${b} · ${fmt(a)}ˣ og g(x) = ${b2} · ${fmt(a2)}ˣ.\nHvilken af ovenstående funktioner er voksende, og hvilken er aftagende? Begrund dit svar.`,
-      options: [
-        `f(x) er ${rising ? "voksende" : "aftagende"} (a=${fmt(a)} er ${a > 1 ? "> 1" : "< 1"}), g(x) er ${rising ? "aftagende" : "voksende"} (a=${fmt(a2)} er ${a2 > 1 ? "> 1" : "< 1"})`,
-        `Begge funktioner er voksende`,
-        `Begge funktioner er aftagende`,
-        `f(x) er aftagende og g(x) er voksende fordi b-værdien bestemmer det`
+      type: "mc2",
+      text: `Lad f(x) = ${b1} · ${fmt(a1)}ˣ og g(x) = ${b2} · ${fmt(a2)}ˣ.\nHvilken af funktionerne er voksende, og hvilken er aftagende? Begrund dit svar.`,
+      questions: [
+        {
+          label: `f(x) = ${b1} · ${fmt(a1)}ˣ`,
+          options: ["Voksende", "Aftagende"],
+          correct: 1,
+          explanation: `a = ${fmt(a1)} er mindre end 1 → aftagende.`
+        },
+        {
+          label: `g(x) = ${b2} · ${fmt(a2)}ˣ`,
+          options: ["Voksende", "Aftagende"],
+          correct: 0,
+          explanation: `a = ${fmt(a2)} er større end 1 → voksende.`
+        }
       ],
-      correct: 0,
-      explanation: `Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende. f: a=${fmt(a)} → ${a > 1 ? "voksende" : "aftagende"}. g: a=${fmt(a2)} → ${a2 > 1 ? "voksende" : "aftagende"}.`
+      explanation: `Når a > 1 er funktionen voksende, når 0 < a < 1 er den aftagende.`
     };
   },
 
