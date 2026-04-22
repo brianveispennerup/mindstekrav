@@ -41,6 +41,11 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 .sub{font-size:14px;color:#666;margin-bottom:1rem}
 .draw-hint{font-size:13px;color:#666;margin-bottom:6px;}
 .draw-points-info{font-size:13px;color:#555;margin-top:6px;min-height:20px;}
+.data-table{border-collapse:collapse;width:100%;font-size:14px;margin-bottom:0.75rem;}
+.data-table th{background:#f5f5f0;padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:600;}
+.data-table td{padding:6px 10px;border:1px solid #ddd;text-align:center;}
+.data-table tfoot td{background:#f5f5f0;font-weight:600;}
+.data-table input{width:55px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;}
 </style>
 </head>
 <body>
@@ -98,6 +103,16 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <div id="mc2-questions"></div>
       <button class="primary" onclick="checkMC2()" style="margin-top:8px">Tjek</button>
     </div>
+    <div id="pinde-area" style="display:none">
+      <div id="pinde-table" style="margin-bottom:0.75rem;overflow-x:auto;"></div>
+      <canvas id="pinde-canvas" style="width:100%;cursor:ns-resize;display:block;border:1px solid #e0e0d8;border-radius:8px;background:#fafaf8;"></canvas>
+      <p style="font-size:12px;color:#888;margin-top:4px;">Klik eller træk søjlerne op/ned til den rigtige højde.</p>
+      <button class="primary" onclick="checkPinde()" style="margin-top:8px">Tjek</button>
+    </div>
+    <div id="table-area" style="display:none">
+      <div id="table-container" style="overflow-x:auto;margin-bottom:1rem;"></div>
+      <button class="primary" onclick="checkTable()">Tjek</button>
+    </div>
     <div class="feedback" id="feedback"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="primary" id="next-btn" onclick="nextQuestion()" style="display:none;flex:1">Næste opgave</button>
@@ -112,7 +127,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div class="score-row">
       <div class="score-box"><div class="num" id="res-correct">0</div><div class="lbl">Rigtige</div></div>
       <div class="score-box"><div class="num" id="res-wrong">0</div><div class="lbl">Forkerte</div></div>
-      <div class="score-box"><div class="num" id="res-pct">0%</div><div class="lbl">Score</div></div>
+      <div class="score-box" id="res-pct-box"><div class="num" id="res-pct">0%</div><div class="lbl">Score</div></div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="primary" onclick="startQuiz()" style="flex:1">Prøv igen</button>
@@ -430,7 +445,7 @@ function renderQuestion() {
   document.getElementById("progress-fill").style.width = Math.round(qIndex / sessionQs.length * 100) + "%";
   document.getElementById("q-counter").textContent = (qIndex + 1) + " / " + sessionQs.length;
   document.getElementById("q-forloeb").textContent = FORLOEB[q._forloeb || selected];
-  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : "Skriv dit svar";
+  document.getElementById("q-type-label").textContent = q.type === "mc" || q.type === "mc2" ? "Vælg det rigtige svar" : q.type === "draw" ? "Tegn grafen" : q.type === "pinde" ? "Lav pindediagram" : "Skriv dit svar";
   document.getElementById("q-text").textContent = q.text;
   document.getElementById("feedback").className = "feedback";
   document.getElementById("next-btn").style.display = "none";
@@ -450,7 +465,11 @@ function renderQuestion() {
   const drawDiv = document.getElementById("draw-area");
   const fieldsDiv = document.getElementById("fields-area");
   const mc2Div = document.getElementById("mc2-area");
-  mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none"; fieldsDiv.style.display = "none"; mc2Div.style.display = "none";
+  const pindeDiv = document.getElementById("pinde-area");
+  const tableDiv = document.getElementById("table-area");
+  mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none";
+  fieldsDiv.style.display = "none"; mc2Div.style.display = "none";
+  pindeDiv.style.display = "none"; tableDiv.style.display = "none";
   if (q.type === "mc") {
     q.options.forEach((opt, i) => {
       const btn = document.createElement("button"); btn.className = "mc-option"; btn.textContent = opt;
@@ -496,6 +515,13 @@ function renderQuestion() {
     fieldsDiv.style.display = "block";
     const container = document.getElementById("fields-inputs");
     container.innerHTML = "";
+    // Vis tabel hvis opgaven har en
+    if (q.tableHeaders) {
+      const tblWrap = document.createElement("div");
+      tblWrap.style.cssText = "overflow-x:auto;margin-bottom:0.75rem;";
+      tblWrap.innerHTML = buildTableHTML(q.tableHeaders, q.tableRows, q.tableFooter);
+      container.parentElement.insertBefore(tblWrap, container);
+    }
     q.fields.forEach((f, i) => {
       if (f.prefix) {
         const lbl = document.createElement("span"); lbl.textContent = f.prefix + " ";
@@ -512,6 +538,13 @@ function renderQuestion() {
       }
     });
     setTimeout(() => { const f = document.getElementById("field_0"); if (f) f.focus(); }, 150);
+  } else if (q.type === "pinde") {
+    pindeDiv.style.display = "block";
+    if (q.tableHeaders) renderDataTable("pinde-table", q.tableHeaders, q.tableRows, q.tableFooter);
+    initPindeCanvas(q.labels, q.answers, q.yMax);
+  } else if (q.type === "table") {
+    tableDiv.style.display = "block";
+    renderInputTable("table-container", q.tableHeaders, q.tableRows, q.tableFooter, q.inputCols, q.answers);
   } else {
     inputDiv.style.display = "block";
     const prefix = document.getElementById("input-prefix");
@@ -521,6 +554,225 @@ function renderQuestion() {
     setTimeout(() => inp.focus(), 150);
   }
 }
+function buildTableHTML(headers, rows, footer) {
+  let html = '<table class="data-table"><thead><tr>';
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(row => {
+    html += '<tr>';
+    row.forEach(cell => html += `<td>${cell}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  if (footer) {
+    html += '<tfoot><tr>';
+    footer.forEach(cell => html += `<td>${cell}</td>`);
+    html += '</tr></tfoot>';
+  }
+  html += '</table>';
+  return html;
+}
+
+function renderDataTable(containerId, headers, rows, footer) {
+  document.getElementById(containerId).innerHTML = buildTableHTML(headers, rows, footer);
+}
+
+function renderInputTable(containerId, headers, rows, footer, inputCols, answers) {
+  const container = document.getElementById(containerId);
+  let html = '<table class="data-table"><thead><tr>';
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach((row, ri) => {
+    html += '<tr>';
+    headers.forEach((_, ci) => {
+      if (ci < row.length) {
+        html += `<td>${row[ci]}</td>`;
+      } else if (inputCols.includes(ci)) {
+        const inputIdx = inputCols.indexOf(ci);
+        html += `<td><input type="text" id="tinput_${ri}_${inputIdx}" class="data-table-input" style="width:55px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;" onkeydown="if(event.key==='Enter')checkTable()"></td>`;
+      } else {
+        html += '<td></td>';
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  if (footer) {
+    html += '<tfoot><tr>';
+    footer.forEach(cell => html += `<td>${cell}</td>`);
+    html += '</tr></tfoot>';
+  }
+  html += '</table>';
+  container.innerHTML = html;
+}
+
+function checkTable() {
+  if (answered) return;
+  const q = sessionQs[qIndex];
+  let allOk = true;
+  q.tableRows.forEach((_, ri) => {
+    q.inputCols.forEach((_, inputIdx) => {
+      const inp = document.getElementById(`tinput_${ri}_${inputIdx}`);
+      if (!inp) return;
+      inp.disabled = true;
+      const val = normalizeAnswer(inp.value.replace(',', '.'));
+      const expected = normalizeAnswer(q.answers[ri][inputIdx].replace(',', '.'));
+      if (val !== expected) {
+        allOk = false;
+        inp.style.background = '#FCEBEB';
+        inp.value = q.answers[ri][inputIdx]; // vis korrekt svar
+      } else {
+        inp.style.background = '#EAF3DE';
+      }
+    });
+  });
+  answered = true;
+  showFeedback(allOk, q.explanation);
+  if (allOk) correct_count++; else wrong_count++;
+  document.getElementById("next-btn").style.display = "block";
+}
+
+// ---- Pindediagram canvas ----
+let pindeState = { labels: [], answers: [], current: [], yMax: 0, canvas: null, dragging: -1 };
+
+function initPindeCanvas(labels, answers, yMax) {
+  pindeState.labels = labels;
+  pindeState.answers = answers;
+  pindeState.current = labels.map(() => 0);
+  pindeState.yMax = yMax;
+  const canvas = document.getElementById('pinde-canvas');
+  pindeState.canvas = canvas;
+  const size = Math.min((canvas.parentElement.clientWidth || 400), 500);
+  canvas.width = size; canvas.height = Math.round(size * 0.7);
+  drawPinde();
+
+  function getBarFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const cx = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) * scaleX;
+    const margin = { l: 40, r: 10, t: 10, b: 35 };
+    const plotW = canvas.width - margin.l - margin.r;
+    const barW = plotW / labels.length;
+    const barIdx = Math.floor((cx - margin.l) / barW);
+    return barIdx >= 0 && barIdx < labels.length ? barIdx : -1;
+  }
+
+  function getValueFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    const cy = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) * scaleY;
+    const margin = { t: 10, b: 35 };
+    const plotH = canvas.height - margin.t - margin.b;
+    const val = Math.round((1 - (cy - margin.t) / plotH) * yMax);
+    return Math.max(0, Math.min(yMax, val));
+  }
+
+  function handleStart(e) {
+    if (answered) return;
+    e.preventDefault();
+    pindeState.dragging = getBarFromEvent(e);
+  }
+  function handleMove(e) {
+    if (answered || pindeState.dragging < 0) return;
+    e.preventDefault();
+    pindeState.current[pindeState.dragging] = getValueFromEvent(e);
+    drawPinde();
+  }
+  function handleEnd(e) { pindeState.dragging = -1; }
+
+  canvas.addEventListener('mousedown', handleStart);
+  canvas.addEventListener('mousemove', handleMove);
+  canvas.addEventListener('mouseup', handleEnd);
+  canvas.addEventListener('touchstart', handleStart, { passive: false });
+  canvas.addEventListener('touchmove', handleMove, { passive: false });
+  canvas.addEventListener('touchend', handleEnd);
+  // Single click
+  canvas.addEventListener('click', (e) => {
+    if (answered) return;
+    const idx = getBarFromEvent(e);
+    if (idx >= 0) { pindeState.current[idx] = getValueFromEvent(e); drawPinde(); }
+  });
+}
+
+function drawPinde() {
+  const canvas = pindeState.canvas;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const { labels, current, yMax } = pindeState;
+  const margin = { l: 40, r: 10, t: 10, b: 35 };
+  const W = canvas.width, H = canvas.height;
+  const plotW = W - margin.l - margin.r;
+  const plotH = H - margin.t - margin.b;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(margin.l, margin.t, plotW, plotH);
+
+  // Grid
+  const steps = 5;
+  ctx.strokeStyle = '#e8e8e2'; ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const y = margin.t + plotH - (i / steps) * plotH;
+    ctx.beginPath(); ctx.moveTo(margin.l, y); ctx.lineTo(margin.l + plotW, y); ctx.stroke();
+    ctx.fillStyle = '#888'; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(yMax * i / steps), margin.l - 4, y + 4);
+  }
+
+  // Søjler
+  const barW = plotW / labels.length;
+  current.forEach((val, i) => {
+    const barH = (val / yMax) * plotH;
+    const x = margin.l + i * barW + barW * 0.1;
+    const w = barW * 0.8;
+    const y = margin.t + plotH - barH;
+    ctx.fillStyle = '#B5D4F4';
+    ctx.strokeStyle = '#185FA5'; ctx.lineWidth = 1;
+    ctx.fillRect(x, y, w, barH);
+    ctx.strokeRect(x, y, w, barH);
+    // Label
+    ctx.fillStyle = '#555'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], margin.l + i * barW + barW / 2, H - 8);
+    // Værdi
+    if (val > 0) { ctx.fillStyle = '#333'; ctx.fillText(val, margin.l + i * barW + barW / 2, y - 4); }
+  });
+
+  // Akselinjer
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(margin.l, margin.t); ctx.lineTo(margin.l, margin.t + plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(margin.l, margin.t + plotH); ctx.lineTo(margin.l + plotW, margin.t + plotH); ctx.stroke();
+}
+
+function checkPinde() {
+  if (answered) return;
+  const { current, answers } = pindeState;
+  const tol = 1;
+  const ok = answers.every((ans, i) => Math.abs(current[i] - ans) <= tol);
+  answered = true;
+
+  // Vis korrekt i grøn
+  const canvas = pindeState.canvas;
+  const ctx = canvas.getContext('2d');
+  const { labels, yMax } = pindeState;
+  const margin = { l: 40, r: 10, t: 10, b: 35 };
+  const W = canvas.width, H = canvas.height;
+  const plotW = W - margin.l - margin.r;
+  const plotH = H - margin.t - margin.b;
+  const barW = plotW / labels.length;
+  answers.forEach((val, i) => {
+    const barH = (val / yMax) * plotH;
+    const x = margin.l + i * barW + barW * 0.1;
+    const w = barW * 0.8;
+    const y = margin.t + plotH - barH;
+    ctx.strokeStyle = '#3B6D11'; ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, barH);
+  });
+
+  const q = sessionQs[qIndex];
+  showFeedback(ok, ok ? q.explanation : `Ikke helt rigtigt — de grønne kanter viser de korrekte højder. ${q.explanation}`);
+  if (ok) correct_count++; else wrong_count++;
+  document.getElementById("next-btn").style.display = "block";
+}
+
 function checkMC(chosen, btn, q) {
   if (answered) return; answered = true;
   document.querySelectorAll(".mc-option").forEach(b => { b.onclick = null; b.classList.add("disabled"); });
@@ -605,9 +857,13 @@ function showFeedback(ok, msg) {
 function nextQuestion() { qIndex++; if (qIndex >= sessionQs.length) showResult(); else renderQuestion(); }
 function showResult() {
   const tot = correct_count + wrong_count;
+  const pct = tot > 0 ? Math.round(correct_count / tot * 100) : 0;
   document.getElementById("res-correct").textContent = correct_count;
   document.getElementById("res-wrong").textContent = wrong_count;
-  document.getElementById("res-pct").textContent = (tot > 0 ? Math.round(correct_count / tot * 100) : 0) + "%";
+  const pctEl = document.getElementById("res-pct");
+  pctEl.textContent = pct + "%";
+  pctEl.style.color = pct >= 80 ? '#27500A' : pct >= 40 ? '#7A5800' : '#791F1F';
+  document.getElementById("res-pct-box").style.background = pct >= 80 ? '#EAF3DE' : pct >= 40 ? '#FFF8E1' : '#FCEBEB';
   show("screen-result");
 }
 init();
