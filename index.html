@@ -87,8 +87,12 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
       <p class="draw-points-info" id="draw-points-info">Ingen punkter valgt endnu.</p>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="primary" onclick="resetDrawPoints()">Nulstil punkter</button>
-        <button class="primary" id="draw-check-btn" onclick="checkDraw()" style="display:none;border-color:#185FA5;color:#185FA5">Tjek linje</button>
+        <button class="primary" id="draw-check-btn" onclick="checkDraw()" style="display:none">Tjek linje</button>
       </div>
+    </div>
+    <div id="fields-area" style="display:none">
+      <div id="fields-inputs" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:1rem;font-size:15px;color:#555;"></div>
+      <button class="primary" onclick="checkFields()">Tjek</button>
     </div>
     <div class="feedback" id="feedback"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
@@ -177,7 +181,8 @@ const GENERATORS = {};
 // ---- Draw state ----
 let drawState = { a: 0, b: 0, pts: [], plotId: '', xRange: [-6, 6], yRange: [-12, 12] };
 
-function initDrawCanvas(a, b) {
+function initDrawCanvas(a, b, range) {
+  range = range || 10;
   drawState.a = a; drawState.b = b; drawState.pts = [];
   const wrap = document.getElementById('draw-canvas-wrap');
   wrap.innerHTML = '';
@@ -186,13 +191,11 @@ function initDrawCanvas(a, b) {
   const div = document.createElement('div');
   div.id = plotId;
   wrap.appendChild(div);
-  const xr = [-6, 6];
-  let yLo = Math.min(a * -6 + b, a * 6 + b) - 3;
-  let yHi = Math.max(a * -6 + b, a * 6 + b) + 3;
-  yLo = Math.max(yLo, -18); yHi = Math.min(yHi, 18);
+  const xr = [-range, range];
+  const yLo = -range, yHi = range;
   drawState.xRange = xr; drawState.yRange = [yLo, yHi];
   const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-    height: 300, dragmode: false,
+    height: 340, dragmode: false,
     xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: xr, dtick: 1 }),
     yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [yLo, yHi], dtick: 1 })
   });
@@ -354,7 +357,8 @@ function renderQuestion() {
   const mcDiv = document.getElementById("mc-options");
   const inputDiv = document.getElementById("input-area");
   const drawDiv = document.getElementById("draw-area");
-  mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none";
+  const fieldsDiv = document.getElementById("fields-area");
+  mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none"; fieldsDiv.style.display = "none";
   if (q.type === "mc") {
     q.options.forEach((opt, i) => {
       const btn = document.createElement("button"); btn.className = "mc-option"; btn.textContent = opt;
@@ -364,7 +368,27 @@ function renderQuestion() {
     drawDiv.style.display = "block";
     document.getElementById('draw-check-btn').style.display = 'none';
     document.getElementById('draw-points-info').textContent = 'Ingen punkter valgt endnu.';
-    requestAnimationFrame(() => requestAnimationFrame(() => initDrawCanvas(q.drawA, q.drawB)));
+    requestAnimationFrame(() => requestAnimationFrame(() => initDrawCanvas(q.drawA, q.drawB, q.drawRange || 10)));
+  } else if (q.type === "fields") {
+    fieldsDiv.style.display = "block";
+    const container = document.getElementById("fields-inputs");
+    container.innerHTML = "";
+    q.fields.forEach((f, i) => {
+      if (f.prefix) {
+        const lbl = document.createElement("span"); lbl.textContent = f.prefix + " ";
+        container.appendChild(lbl);
+      }
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.id = "field_" + i;
+      inp.style.cssText = "width:60px;padding:0.4rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:15px;";
+      inp.onkeydown = (e) => { if (e.key === 'Enter') checkFields(); };
+      container.appendChild(inp);
+      if (f.suffix) {
+        const suf = document.createElement("span"); suf.textContent = " " + f.suffix + " ";
+        container.appendChild(suf);
+      }
+    });
+    setTimeout(() => { const f = document.getElementById("field_0"); if (f) f.focus(); }, 150);
   } else {
     inputDiv.style.display = "block";
     const prefix = document.getElementById("input-prefix");
@@ -389,6 +413,26 @@ function normalizeAnswer(s) {
     .replace(/\*·/g, '')         // fjern gangetegn (7*x → 7x)
     .replace(/\*/g, '')          // fjern *
     .replace(/·/g, '');          // fjern ·
+}
+function checkFields() {
+  if (answered) return;
+  const q = sessionQs[qIndex];
+  let allOk = true;
+  q.fields.forEach((f, i) => {
+    const inp = document.getElementById("field_" + i);
+    if (inp) inp.disabled = true;
+    const val = inp ? normalizeAnswer(inp.value.replace(",", ".")) : "";
+    const expected = normalizeAnswer(q.answers[i].replace(",", "."));
+    if (val !== expected) allOk = false;
+  });
+  answered = true;
+  if (allOk) { showFeedback(true, q.explanation); correct_count++; }
+  else {
+    const correct = q.answers.join(", ");
+    showFeedback(false, `Forkert — svarene er: ${correct}. ${q.explanation}`);
+    wrong_count++;
+  }
+  document.getElementById("next-btn").style.display = "block";
 }
 function checkInput() {
   if (answered) return;
