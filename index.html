@@ -541,6 +541,8 @@ function renderQuestion() {
   document.getElementById("q-text").textContent = q.text;
   document.getElementById("feedback").className = "feedback";
   document.getElementById("next-btn").style.display = "none";
+  const oldInputTbl = document.getElementById("input-table-wrap");
+  if (oldInputTbl) oldInputTbl.remove();
   const graphDiv = document.getElementById("q-graph");
   graphDiv.innerHTML = "";
   if (q.graph) {
@@ -735,6 +737,9 @@ function renderQuestion() {
       tblWrap.style.cssText = "overflow-x:auto;margin-bottom:0.75rem;";
       tblWrap.innerHTML = buildTableHTML(q.tableHeaders, q.tableRows, q.tableFooter);
       inputDiv.parentElement.insertBefore(tblWrap, inputDiv);
+    } else {
+      const oldTbl = document.getElementById("input-table-wrap");
+      if (oldTbl) oldTbl.remove();
     }
     const inp = document.getElementById("answer-input"); inp.value = ""; inp.disabled = false;
     setTimeout(() => inp.focus(), 150);
@@ -771,13 +776,13 @@ function renderInputTable(containerId, headers, rows, footer, inputCols, answers
   rows.forEach((row, ri) => {
     html += '<tr>';
     headers.forEach((_, ci) => {
-      if (ci < row.length) {
-        html += `<td>${row[ci]}</td>`;
-      } else if (inputCols.includes(ci)) {
+      const cellVal = ci < row.length ? row[ci] : '';
+      const isInput = inputCols.includes(ci) && answers[ri] && answers[ri][inputCols.indexOf(ci)] !== null && cellVal === '';
+      if (isInput) {
         const inputIdx = inputCols.indexOf(ci);
-        html += `<td><input type="text" id="tinput_${ri}_${inputIdx}" class="data-table-input" style="width:55px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;" onkeydown="if(event.key==='Enter')checkTable()"></td>`;
+        html += `<td><input type="text" id="tinput_${ri}_${inputIdx}" class="data-table-input" style="width:65px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;" onkeydown="if(event.key==='Enter')checkTable()"></td>`;
       } else {
-        html += '<td></td>';
+        html += `<td>${cellVal}</td>`;
       }
     });
     html += '</tr>';

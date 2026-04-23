@@ -67,7 +67,6 @@ GENERATORS.F7 = [
     return {
       type: "mc",
       text: `I en χ²-test arbejdes der med hypoteserne:\nH₀: Der er ingen sammenhæng mellem alder og politisk overbevisning.\nH₁: Der er en sammenhæng mellem alder og politisk overbevisning.\n\nSignifikansniveauet sættes til α = ${fmtA}\nEfterfølgende er p-værdien regnet til p = ${fmtP}\n\nKonkludér på testen.`,
-      options: [
         reject
           ? `Da p = ${fmtP} < α = ${fmtA} forkastes H₀. Der er statistisk signifikant sammenhæng mellem alder og politisk overbevisning.`
           : `Da p = ${fmtP} > α = ${fmtA} forkastes H₀ ikke. Der er ikke statistisk signifikant sammenhæng mellem alder og politisk overbevisning.`,
