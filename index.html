@@ -512,6 +512,13 @@ async function printPDF() {
       qText.style.cssText = "font-size:14px;color:#111;line-height:1.6;white-space:pre-line;margin-bottom:6px;";
       qText.textContent = `${num}) ${q.text}`;
       qDiv.appendChild(qText);
+      // Vis tabel hvis opgaven har en
+      if (q.tableHeaders) {
+        const tblWrap = document.createElement("div");
+        tblWrap.style.cssText = "overflow-x:auto;margin:6px 0;";
+        tblWrap.innerHTML = buildTableHTML(q.tableHeaders, q.tableRows, q.tableFooter);
+        qDiv.appendChild(tblWrap);
+      }
       if (imgSrc) {
         const img = document.createElement("img");
         img.src = imgSrc;
