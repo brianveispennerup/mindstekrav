@@ -54,6 +54,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
   .no-print { display: none !important; }
 }
 #print-output { display: none; font-family: system-ui; padding: 2rem; max-width: 800px; margin: 0 auto; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -448,9 +449,14 @@ function startAllForloeb() {
 
 async function printPDF() {
   const content = document.getElementById("print-content");
-  content.innerHTML = '<p style="color:#888;font-size:14px;">Genererer opgaver og grafer — vent venligst...</p>';
+  content.innerHTML = `<div style="text-align:center;padding:3rem;">
+    <div style="font-size:48px;animation:spin 1s linear infinite;display:inline-block;">⏳</div>
+    <p style="color:#888;font-size:14px;margin-top:1rem;">Genererer opgaver og grafer — vent venligst...</p>
+  </div>`;
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById("print-output").style.display = "block";
+  // Giv browseren tid til at rendere loading-beskeden
+  await new Promise(r => setTimeout(r, 100));
 
   // Skjult container til at rendere grafer i
   let hiddenContainer = document.getElementById("pdf-graph-container");
