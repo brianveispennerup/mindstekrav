@@ -1,21 +1,29 @@
 // F6 — Sandsynlighedsregning
 GENERATORS.F6 = [
 
-  // 1. Sandsynlighedsfelt for n-sidet terning
+  // 1. Sandsynlighedsfelt for kuglepose
   () => {
-    const n = rnd(4, 8);
-    const p = Math.round(1 / n * 100) / 100;
-    const outcomes = Array.from({ length: n }, (_, i) => i + 1);
+    const farver = ['røde', 'blå', 'gule', 'grønne', 'hvide', 'sorte'];
+    // Vælg 3 tilfældige farver
+    const shuffledFarver = shuffle([...farver]);
+    const valgteFarver = shuffledFarver.slice(0, 3);
+    // Tilfældigt antal af hver farve (1-5)
+    const antal = valgteFarver.map(() => rnd(1, 5));
+    const tot = antal.reduce((a, b) => a + b, 0);
+    const probs = antal.map(a => Math.round(a / tot * 100) / 100);
+    // Vis farvenavn uden "e" til sidst som udfald
+    const udfaldsNavn = valgteFarver.map(f => f.slice(0, -1)); // "rød", "blå" etc
+    const beskriv = valgteFarver.map((f, i) => `${antal[i]} ${f}`).join(', ');
     return {
       type: "table",
-      text: `Opstil et sandsynlighedsfelt (U, P) for et kast med en almindelig ${n}-sidet terning vha. af en tabel.\nSandsynlighedsfeltet skal vise udfaldsrummet og sandsynlighederne for de enkelte udfald.`,
-      tableHeaders: ["u", ...outcomes.map(String)],
+      text: `Der trækkes én kugle tilfældigt fra en pose med ${beskriv} kugler.\nOpstil et sandsynlighedsfelt (U, P) ved hjælp af en tabel, som viser udfaldsrummet og sandsynligheden for hvert udfald.`,
+      tableHeaders: ["u", ...udfaldsNavn],
       tableRows: [["P(u)"]],
       tableFooter: null,
-      inputCols: Array.from({ length: n }, (_, i) => i + 1),
-      answers: [outcomes.map(() => fmt(p))],
+      inputCols: [1, 2, 3],
+      answers: [probs.map(p => fmt(p))],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=253#c903",
-      explanation: `For en ${n}-sidet terning er sandsynligheden for hvert udfald 1/${n} = ${fmt(p)}.`
+      explanation: `Total antal kugler: ${tot}. P(${udfaldsNavn[0]}) = ${antal[0]}/${tot} = ${fmt(probs[0])}, P(${udfaldsNavn[1]}) = ${antal[1]}/${tot} = ${fmt(probs[1])}, P(${udfaldsNavn[2]}) = ${antal[2]}/${tot} = ${fmt(probs[2])}.`
     };
   },
 
