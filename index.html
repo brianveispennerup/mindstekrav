@@ -46,9 +46,26 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 .data-table td{padding:6px 10px;border:1px solid #ddd;text-align:center;}
 .data-table tfoot td{background:#f5f5f0;font-weight:600;}
 .data-table input{width:55px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;}
+@media print {
+  body { background: #fff; padding: 0; max-width: 100%; }
+  .screen { display: none !important; }
+  #print-output { display: block !important; }
+  .print-forloeb { page-break-inside: avoid; margin-bottom: 1.5rem; }
+  .no-print { display: none !important; }
+}
+#print-output { display: none; font-family: system-ui; padding: 2rem; max-width: 800px; margin: 0 auto; }
 </style>
 </head>
 <body>
+
+<div id="print-output">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;padding-bottom:1rem;border-bottom:2px solid #185FA5;">
+    <h1 style="font-size:22px;color:#111;">Mindstekrav — Opgaver</h1>
+    <button class="primary no-print" onclick="window.print()" style="padding:0.6rem 1.2rem;">🖨️ Print / Gem som PDF</button>
+    <button class="primary no-print" onclick="document.getElementById('print-output').style.display='none';document.getElementById('screen-select').classList.add('active');" style="padding:0.6rem 1.2rem;margin-left:8px;">← Tilbage</button>
+  </div>
+  <div id="print-content"></div>
+</div>
 
 <div id="screen-select" class="screen active">
   <div class="card">
@@ -66,6 +83,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     </div>
   </div>
   <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.8rem;font-size:15px">Start</button>
+  <button class="primary" onclick="printPDF()" style="width:100%;padding:0.8rem;font-size:15px;margin-top:8px">🖨️ Udskriv opgaver som PDF</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -172,7 +190,8 @@ const FORLOEB = {
   F3: "Eksponentielle funktioner",
   F4: "Finansiel regning",
   F5: "Andengradsfunktioner",
-  F6: "Sandsynlighedsregning og fordelinger"
+  F6: "Sandsynlighedsregning og fordelinger",
+  F7: "Konfidensinterval og Hypotesetest"
 };
 
 // ---- Hjælpefunktioner ----
@@ -222,6 +241,7 @@ const GENERATORS = {};
 <script src="forloeb/f4.js"></script>
 <script src="forloeb/f5.js"></script>
 <script src="forloeb/f6.js"></script>
+<script src="forloeb/f7.js"></script>
 
 <!-- ===================== SPILMOTOR ===================== -->
 <script>
@@ -426,6 +446,55 @@ function startAllForloeb() {
   show("screen-quiz"); renderQuestion();
 }
 
+function printPDF() {
+  const content = document.getElementById("print-content");
+  content.innerHTML = "";
+  Object.entries(FORLOEB).forEach(([key, name]) => {
+    const section = document.createElement("div");
+    section.className = "print-forloeb";
+    section.innerHTML = `<h2 style="font-size:16px;font-weight:700;color:#185FA5;border-bottom:1px solid #e0e0d8;padding-bottom:6px;margin-bottom:12px;">${key} — ${name}</h2>`;
+    const gens = GENERATORS[key];
+    gens.forEach((gen, i) => {
+      try {
+        const q = gen();
+        if (!q) return;
+        const qDiv = document.createElement("div");
+        qDiv.style.cssText = "margin-bottom:1.25rem;padding-left:1rem;";
+        // Spørgsmålstekst
+        const qText = document.createElement("p");
+        qText.style.cssText = "font-size:14px;color:#111;line-height:1.6;white-space:pre-line;margin-bottom:6px;";
+        qText.textContent = `${i + 1}) ${q.text}`;
+        qDiv.appendChild(qText);
+        // Svarlinje
+        const ansLine = document.createElement("p");
+        ansLine.style.cssText = "font-size:13px;color:#888;border-top:1px solid #f0f0ec;padding-top:4px;";
+        if (q.type === "mc" || q.type === "mc2") {
+          ansLine.textContent = "Multiple choice";
+        } else if (q.type === "draw") {
+          ansLine.textContent = "Tegn grafen i koordinatsystemet";
+        } else if (q.type === "selvevaluering") {
+          ansLine.textContent = "Skriv dit svar:";
+          const answerBox = document.createElement("div");
+          answerBox.style.cssText = "border:1px solid #ccc;border-radius:4px;height:60px;margin-top:4px;";
+          qDiv.appendChild(answerBox);
+        } else if (q.type === "fields") {
+          const fieldStr = q.fields.map((f, fi) => `${f.prefix || ''} _____ ${f.suffix || ''}`).join(" ");
+          ansLine.textContent = fieldStr;
+        } else {
+          const pre = q.prefix ? q.prefix + " " : "";
+          const suf = q.suffix ? " " + q.suffix : "";
+          ansLine.textContent = `Svar: ${pre}___________${suf}`;
+        }
+        qDiv.appendChild(ansLine);
+        section.appendChild(qDiv);
+      } catch(e) {}
+    });
+    content.appendChild(section);
+  });
+  // Skjul forsiden og vis print
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("print-output").style.display = "block";
+}
 function init() {
   const grid = document.getElementById("forloeb-grid");
   Object.entries(FORLOEB).forEach(([key, name]) => {
@@ -657,6 +726,16 @@ function renderQuestion() {
     const suffix = document.getElementById("input-suffix");
     if (q.suffix) { suffix.textContent = q.suffix; suffix.style.display = "inline"; }
     else { suffix.textContent = ''; suffix.style.display = "none"; }
+    // Vis tabel over inputfeltet hvis opgaven har en
+    if (q.tableHeaders) {
+      const oldTbl = document.getElementById("input-table-wrap");
+      if (oldTbl) oldTbl.remove();
+      const tblWrap = document.createElement("div");
+      tblWrap.id = "input-table-wrap";
+      tblWrap.style.cssText = "overflow-x:auto;margin-bottom:0.75rem;";
+      tblWrap.innerHTML = buildTableHTML(q.tableHeaders, q.tableRows, q.tableFooter);
+      inputDiv.parentElement.insertBefore(tblWrap, inputDiv);
+    }
     const inp = document.getElementById("answer-input"); inp.value = ""; inp.disabled = false;
     setTimeout(() => inp.focus(), 150);
   }
@@ -784,6 +863,8 @@ function checkTable() {
     q.inputCols.forEach((_, inputIdx) => {
       const inp = document.getElementById(`tinput_${ri}_${inputIdx}`);
       if (!inp) return;
+      // Skip hvis answer er null (fx Total-række)
+      if (!q.answers[ri] || q.answers[ri][inputIdx] === null) { inp.disabled = true; return; }
       inp.disabled = true;
       const val = normalizeAnswer(inp.value.replace(',', '.'));
       const expected = normalizeAnswer(q.answers[ri][inputIdx].replace(',', '.'));
