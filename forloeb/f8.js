@@ -85,7 +85,7 @@ GENERATORS.F8 = [
     const c  = rndF(-4, 4, 1);
     const fn  = x => a*x*x*x + b*x*x + c*x;
     const dfn = x => 3*a*x*x + 2*b*x + c;
-    const xs  = linspace(-4, 4, 200);
+    const xs  = linspace(-100, 100, 5000);
     const fIsFirst = Math.random() > 0.5;
     const fColor   = fIsFirst ? cp.c1 : cp.c2;
     const dfColor  = fIsFirst ? cp.c2 : cp.c1;
