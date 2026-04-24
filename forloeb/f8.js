@@ -4,10 +4,10 @@
 function mDerivative(exprStr) {
   const raw = math.simplify(math.derivative(exprStr, 'x')).toString();
   return raw
-    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\^\s*(\d+)\s*\)/g, (_, n, p) => `-${n}x^${p}`) // -(9 * x ^ 2) → -9x^2
-    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\)/g, (_, n) => `-${n}x`)                        // -(6 * x) → -6x
-    .replace(/\s*\*\s*/g, '')                                                            // 6 * x → 6x
-    .replace(/\s*\^\s*/g, '^')                                                           // x ^ 2 → x^2
+    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\^\s*(\d+)\s*\)/g, (_, n, p) => `-${n}x^${p}`)
+    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\)/g, (_, n) => `-${n}x`)
+    .replace(/\s*\*\s*/g, '')
+    .replace(/\s*\^\s*/g, '^')
     .trim();
 }
 
@@ -20,65 +20,59 @@ function fmtCoef(n) {
 
 GENERATORS.F8 = [
 
-  // 1. Bestem f'(x) og monotoniforhold — andengradspoly
+  // 1. Bestem f'(x) og monotoniforhold — randomiserer mellem andengradspoly og kubisk
   () => {
-    const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
-    const xT = rnd(-5, 5);   // nulpunkt for f'
-    const b  = -2 * a * xT;
-    const c  = rnd(-8, 8);
+    const isCubic = Math.random() > 0.5;
+    let fStr, dfStr, monotoni;
 
-    const expr  = `${a}*x^2 + ${b}*x + ${c}`;
-    const dfStr = mDerivative(expr);
-
-    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
-    const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
-    const fStr = `f(x) = ${fmtCoef(a)}x²${bStr}${cStr}`;
-
-    const monotoni = a > 0
-      ? [ { interval: `]−∞ ; ${xT}]`, type: "Aftagende" },
-          { interval: `[${xT} ; ∞[`,  type: "Voksende"  } ]
-      : [ { interval: `]−∞ ; ${xT}]`, type: "Voksende"  },
-          { interval: `[${xT} ; ∞[`,  type: "Aftagende" } ];
-
-    return {
-      type: "monotoni",
-      text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
-      dfStr, dfAnswer: dfStr, monotoni,
-      link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
-      explanation: `f'(x) = ${dfStr}. Nulpunkt for f': x = ${xT}.`
-    };
+    if (isCubic) {
+      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
+      const t = rnd(1, 4);
+      const b = -3 * a * t * t;
+      const expr = `${a}*x^3 + ${b}*x`;
+      dfStr = mDerivative(expr);
+      const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+      fStr = `f(x) = ${fmtCoef(a)}x³${bStr}`;
+      monotoni = a > 0
+        ? [ { interval: `]−∞ ; ${-t}]`,  type: "Voksende"  },
+            { interval: `[${-t} ; ${t}]`, type: "Aftagende" },
+            { interval: `[${t} ; ∞[`,     type: "Voksende"  } ]
+        : [ { interval: `]−∞ ; ${-t}]`,  type: "Aftagende" },
+            { interval: `[${-t} ; ${t}]`, type: "Voksende"  },
+            { interval: `[${t} ; ∞[`,     type: "Aftagende" } ];
+      return {
+        type: "monotoni",
+        text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
+        dfStr, dfAnswer: dfStr, monotoni,
+        link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
+        explanation: `f'(x) = ${dfStr}. Nulpunkter for f': x = ${-t} og x = ${t}.`
+      };
+    } else {
+      const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
+      const xT = rnd(-5, 5);
+      const b  = -2 * a * xT;
+      const c  = rnd(-8, 8);
+      const expr = `${a}*x^2 + ${b}*x + ${c}`;
+      dfStr = mDerivative(expr);
+      const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+      const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
+      fStr = `f(x) = ${fmtCoef(a)}x²${bStr}${cStr}`;
+      monotoni = a > 0
+        ? [ { interval: `]−∞ ; ${xT}]`, type: "Aftagende" },
+            { interval: `[${xT} ; ∞[`,  type: "Voksende"  } ]
+        : [ { interval: `]−∞ ; ${xT}]`, type: "Voksende"  },
+            { interval: `[${xT} ; ∞[`,  type: "Aftagende" } ];
+      return {
+        type: "monotoni",
+        text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
+        dfStr, dfAnswer: dfStr, monotoni,
+        link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
+        explanation: `f'(x) = ${dfStr}. Nulpunkt for f': x = ${xT}.`
+      };
+    }
   },
 
-  // 2. Bestem f'(x) og monotoniforhold — kubisk
-  () => {
-    const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
-    const t = rnd(1, 4);
-    const b = -3 * a * t * t;  // sikrer heltalsnulpunkter ±t for f'
-
-    const expr  = `${a}*x^3 + ${b}*x`;
-    const dfStr = mDerivative(expr);
-
-    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
-    const fStr = `f(x) = ${fmtCoef(a)}x³${bStr}`;
-
-    const monotoni = a > 0
-      ? [ { interval: `]−∞ ; ${-t}]`,  type: "Voksende"  },
-          { interval: `[${-t} ; ${t}]`, type: "Aftagende" },
-          { interval: `[${t} ; ∞[`,     type: "Voksende"  } ]
-      : [ { interval: `]−∞ ; ${-t}]`,  type: "Aftagende" },
-          { interval: `[${-t} ; ${t}]`, type: "Voksende"  },
-          { interval: `[${t} ; ∞[`,     type: "Aftagende" } ];
-
-    return {
-      type: "monotoni",
-      text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
-      dfStr, dfAnswer: dfStr, monotoni,
-      link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
-      explanation: `f'(x) = ${dfStr}. Nulpunkter for f': x = ${-t} og x = ${t}.`
-    };
-  },
-
-  // 3. Identificér f(x) og f'(x) fra graf
+  // 2. Identificér f(x) og f'(x) fra graf
   () => {
     const colorPairs = [
       { c1: '#27AE60', c2: '#8E44AD', n1: 'Grøn',   n2: 'Lilla' },
@@ -117,69 +111,6 @@ GENERATORS.F8 = [
       ],
       link: "https://laerebogimatematik2hhx.systime.dk/?id=133",
       explanation: `f(x) er den ${fName.toLowerCase()} graf — den afledte er et grad lavere og skifter fortegn ved f's toppunkter/bundpunkter.`
-    };
-  },
-
-  // 4. Bestem f'(x) og monotoniforhold — 1 interval (altid voksende eller aftagende)
-  () => {
-    // Tre varianter der alle giver ét interval:
-    // a) Lineær: f(x) = ax + b  →  f'(x) = a (konstant, aldrig 0)
-    // b) Rent kubisk: f(x) = ax³  →  f'(x) = 3ax² ≥ 0 altid
-    // c) Kubisk med dobbeltrod: f(x) = a(x-r)³ + c  →  f'(x) = 3a(x-r)² ≥ 0 altid
-    //    (f' rører x-aksen i x=r men skifter ikke fortegn)
-    const variant = rnd(0, 2);
-    let fStr, dfStr, monotoni;
-
-    if (variant === 0) {
-      // Lineær
-      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 5);
-      const b = rnd(-8, 8);
-      dfStr = mDerivative(`${a}*x + ${b}`);
-      const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}` : ` - ${Math.abs(b)}`);
-      fStr = `f(x) = ${a}x${bStr}`;
-      monotoni = [ { interval: `]−∞ ; ∞[`, type: a > 0 ? "Voksende" : "Aftagende" } ];
-
-    } else if (variant === 1) {
-      // Rent kubisk: f(x) = ax³
-      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
-      dfStr = mDerivative(`${a}*x^3`);
-      fStr = `f(x) = ${fmtCoef(a)}x³`;
-      monotoni = [ { interval: `]−∞ ; ∞[`, type: a > 0 ? "Voksende" : "Aftagende" } ];
-
-    } else {
-      // Kubisk med dobbeltrod i r: f(x) = a(x-r)³ + c
-      // f'(x) = 3a(x-r)² — rører x-aksen i x=r men skifter aldrig fortegn
-      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 2);
-      const r = rnd(-3, 3);
-      const c = rnd(-5, 5);
-      // Koefficienter: a(x-r)³ + c = ax³ - 3arx² + 3ar²x + (c - ar³)
-      const A = a;
-      const B = -3 * a * r;
-      const C = 3 * a * r * r;
-      const D = c - a * r * r * r;
-      const bStr = B === 0 ? '' : (B > 0 ? ` + ${B}x²` : ` - ${Math.abs(B)}x²`);
-      const cStr = C === 0 ? '' : (C > 0 ? ` + ${C}x`    : ` - ${Math.abs(C)}x`);
-      const dStr = D === 0 ? '' : (D > 0 ? ` + ${D}`      : ` - ${Math.abs(D)}`);
-      fStr = `f(x) = ${fmtCoef(A)}x³${bStr}${cStr}${dStr}`;
-      // Byg dfStr direkte: f'(x) = 3Ax² + 2Bx + C (undgår math.js faktorisering)
-      const df2 = 3*A, df1 = 2*B, df0 = C;
-      const dfParts = [];
-      if (df2 !== 0) dfParts.push(`${df2}x^2`);
-      if (df1 !== 0) dfParts.push(df1 > 0 ? `+ ${df1}x` : `- ${Math.abs(df1)}x`);
-      if (df0 !== 0) dfParts.push(df0 > 0 ? `+ ${df0}`  : `- ${Math.abs(df0)}`);
-      dfStr = dfParts.join(' ').replace(/^\+ /, '');
-      const type = a > 0 ? "Voksende" : "Aftagende";
-      monotoni = [ { interval: `]−∞ ; ∞[`, type } ];
-    }
-
-    return {
-      type: "monotoni",
-      text: `En funktion f har forskriften
-${fStr}
-Bestem f'(x) og angiv monotoniforhold for f.`,
-      dfStr, dfAnswer: dfStr, monotoni,
-      link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
-      explanation: `f'(x) = ${dfStr}. Funktionen har ét interval da f' aldrig skifter fortegn.`
     };
   },
 
