@@ -1506,29 +1506,31 @@ function visHistorikIndhold(navn) {
   const sidstePct = avgPct(sidsteUge);
 
   const ugeDiv = document.getElementById('historik-uge');
-  if (sessions.length === 0) {
-    ugeDiv.textContent = 'Du har ikke gennemført nogen sessioner endnu.';
-  } else if (dennPct === null) {
-    ugeDiv.textContent = 'Ingen sessioner denne uge endnu.';
-  } else {
-    const sesssDiff = dennUge.length - sidsteUge.length;
-    const sessColor = sesssDiff >= 0 ? '#27500A' : '#791F1F';
-    const sessDiffStr = sesssDiff > 0 ? `+${sesssDiff}` : String(sesssDiff);
-
-    let ugeHtml = `<strong>Denne uge:</strong> ${dennUge.length} session${dennUge.length !== 1 ? 'er' : ''}`;
-    if (sidsteUge.length > 0) {
-      ugeHtml += ` <span style="color:${sessColor};font-weight:600">(${sessDiffStr} ift. sidste uge med ${sidsteUge.length})</span>`;
-    }
-    ugeHtml += `, ${dennPct}% rigtige i snit`;
-    if (sidstePct !== null) {
-      const diff = dennPct - sidstePct;
-      const diffStr = diff >= 0 ? `+${diff}%` : `${diff}%`;
-      const color = diff >= 0 ? '#27500A' : '#791F1F';
-      ugeHtml += ` <span style="color:${color};font-weight:600">(${diffStr} ift. sidste uge på ${sidstePct}%)</span>`;
-    }
-    ugeHtml += '.';
-    ugeDiv.innerHTML = ugeHtml;
-  }
+  const sessEmoji = dennUge.length >= 10 ? '☁️' : dennUge.length >= 4 ? '❤️' : '🐼';
+  const scoreEmoji = dennPct === null ? '🥉' : dennPct >= 80 ? '🥇' : dennPct >= 30 ? '🥈' : '🥉';
+  const sessDiff = dennUge.length - sidsteUge.length;
+  const sessDiffStr = sessDiff > 0 ? `+${sessDiff}` : String(sessDiff);
+  const sessColor = sessDiff >= 0 ? '#27500A' : '#791F1F';
+  const pctDiff = (dennPct !== null && sidstePct !== null) ? dennPct - sidstePct : null;
+  const pctDiffStr = pctDiff !== null ? (pctDiff >= 0 ? `+${pctDiff}%` : `${pctDiff}%`) : null;
+  const pctColor = pctDiff !== null ? (pctDiff >= 0 ? '#27500A' : '#791F1F') : '#555';
+  ugeDiv.innerHTML = `
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+        <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${sessEmoji}</div>
+        <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du gennemført</div>
+        <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennUge.length}</div>
+        <div style="font-size:13px;color:#666">session${dennUge.length !== 1 ? 'er' : ''}</div>
+        ${sidsteUge.length > 0 ? `<div style="font-size:12px;color:${sessColor};margin-top:6px;font-weight:600">${sessDiffStr} ift. sidste uge (${sidsteUge.length})</div>` : ''}
+      </div>
+      <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+        <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${scoreEmoji}</div>
+        <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du fået</div>
+        <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennPct !== null ? dennPct + '%' : '—'}</div>
+        <div style="font-size:13px;color:#666">rigtige i snit</div>
+        ${pctDiffStr ? `<div style="font-size:12px;color:${pctColor};margin-top:6px;font-weight:600">${pctDiffStr} ift. sidste uge (${sidstePct}%)</div>` : ''}
+      </div>
+    </div>`;
 
   // ---- Oversigt per forløb ----
   const forloebDiv = document.getElementById('historik-forloeb');
