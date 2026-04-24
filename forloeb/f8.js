@@ -98,8 +98,8 @@ GENERATORS.F8 = [
     const yMax  = Math.max(...yVals);
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
       height: 320, showlegend: true, legend: { x: 0.02, y: 0.98 }, dragmode: 'pan',
-      xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis),
-      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis)
+      xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [-6, 6], autorange: false }),
+      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { autorange: true })
     });
     return {
       type: "mc2",
