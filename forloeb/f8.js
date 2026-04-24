@@ -11,6 +11,13 @@ function mDerivative(exprStr) {
     .trim();
 }
 
+// Formater koefficient pænt: 1 → '', -1 → '-', 2 → '2' osv.
+function fmtCoef(n) {
+  if (n === 1)  return '';
+  if (n === -1) return '-';
+  return String(n);
+}
+
 GENERATORS.F8 = [
 
   // 1. Bestem f'(x) og monotoniforhold — andengradspoly
@@ -25,7 +32,7 @@ GENERATORS.F8 = [
 
     const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
     const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
-    const fStr = `f(x) = ${a}x²${bStr}${cStr}`;
+    const fStr = `f(x) = ${fmtCoef(a)}x²${bStr}${cStr}`;
 
     const monotoni = a > 0
       ? [ { interval: `]−∞ ; ${xT}]`, type: "Aftagende" },
@@ -52,7 +59,7 @@ GENERATORS.F8 = [
     const dfStr = mDerivative(expr);
 
     const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
-    const fStr = `f(x) = ${a}x³${bStr}`;
+    const fStr = `f(x) = ${fmtCoef(a)}x³${bStr}`;
 
     const monotoni = a > 0
       ? [ { interval: `]−∞ ; ${-t}]`,  type: "Voksende"  },
@@ -136,7 +143,7 @@ GENERATORS.F8 = [
       // Rent kubisk: f(x) = ax³
       const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
       dfStr = mDerivative(`${a}*x^3`);
-      fStr = `f(x) = ${a}x³`;
+      fStr = `f(x) = ${fmtCoef(a)}x³`;
       monotoni = [ { interval: `]−∞ ; ∞[`, type: a > 0 ? "Voksende" : "Aftagende" } ];
 
     } else {
@@ -153,7 +160,7 @@ GENERATORS.F8 = [
       const bStr = B === 0 ? '' : (B > 0 ? ` + ${B}x²` : ` - ${Math.abs(B)}x²`);
       const cStr = C === 0 ? '' : (C > 0 ? ` + ${C}x`    : ` - ${Math.abs(C)}x`);
       const dStr = D === 0 ? '' : (D > 0 ? ` + ${D}`      : ` - ${Math.abs(D)}`);
-      fStr = `f(x) = ${A}x³${bStr}${cStr}${dStr}`;
+      fStr = `f(x) = ${fmtCoef(A)}x³${bStr}${cStr}${dStr}`;
       // Byg dfStr direkte: f'(x) = 3Ax² + 2Bx + C (undgår math.js faktorisering)
       const df2 = 3*A, df1 = 2*B, df0 = C;
       const dfParts = [];
