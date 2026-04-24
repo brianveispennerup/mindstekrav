@@ -113,4 +113,67 @@ GENERATORS.F8 = [
     };
   },
 
+  // 4. Bestem f'(x) og monotoniforhold — 1 interval (altid voksende eller aftagende)
+  () => {
+    // Tre varianter der alle giver ét interval:
+    // a) Lineær: f(x) = ax + b  →  f'(x) = a (konstant, aldrig 0)
+    // b) Rent kubisk: f(x) = ax³  →  f'(x) = 3ax² ≥ 0 altid
+    // c) Kubisk med dobbeltrod: f(x) = a(x-r)³ + c  →  f'(x) = 3a(x-r)² ≥ 0 altid
+    //    (f' rører x-aksen i x=r men skifter ikke fortegn)
+    const variant = rnd(0, 2);
+    let fStr, dfStr, monotoni;
+
+    if (variant === 0) {
+      // Lineær
+      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 5);
+      const b = rnd(-8, 8);
+      dfStr = mDerivative(`${a}*x + ${b}`);
+      const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}` : ` - ${Math.abs(b)}`);
+      fStr = `f(x) = ${a}x${bStr}`;
+      monotoni = [ { interval: `]−∞ ; ∞[`, type: a > 0 ? "Voksende" : "Aftagende" } ];
+
+    } else if (variant === 1) {
+      // Rent kubisk: f(x) = ax³
+      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
+      dfStr = mDerivative(`${a}*x^3`);
+      fStr = `f(x) = ${a}x³`;
+      monotoni = [ { interval: `]−∞ ; ∞[`, type: a > 0 ? "Voksende" : "Aftagende" } ];
+
+    } else {
+      // Kubisk med dobbeltrod i r: f(x) = a(x-r)³ + c
+      // f'(x) = 3a(x-r)² — rører x-aksen i x=r men skifter aldrig fortegn
+      const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 2);
+      const r = rnd(-3, 3);
+      const c = rnd(-5, 5);
+      // Koefficienter: a(x-r)³ + c = ax³ - 3arx² + 3ar²x + (c - ar³)
+      const A = a;
+      const B = -3 * a * r;
+      const C = 3 * a * r * r;
+      const D = c - a * r * r * r;
+      const bStr = B === 0 ? '' : (B > 0 ? ` + ${B}x²` : ` - ${Math.abs(B)}x²`);
+      const cStr = C === 0 ? '' : (C > 0 ? ` + ${C}x`    : ` - ${Math.abs(C)}x`);
+      const dStr = D === 0 ? '' : (D > 0 ? ` + ${D}`      : ` - ${Math.abs(D)}`);
+      fStr = `f(x) = ${A}x³${bStr}${cStr}${dStr}`;
+      // Byg dfStr direkte: f'(x) = 3Ax² + 2Bx + C (undgår math.js faktorisering)
+      const df2 = 3*A, df1 = 2*B, df0 = C;
+      const dfParts = [];
+      if (df2 !== 0) dfParts.push(`${df2}x^2`);
+      if (df1 !== 0) dfParts.push(df1 > 0 ? `+ ${df1}x` : `- ${Math.abs(df1)}x`);
+      if (df0 !== 0) dfParts.push(df0 > 0 ? `+ ${df0}`  : `- ${Math.abs(df0)}`);
+      dfStr = dfParts.join(' ').replace(/^\+ /, '');
+      const type = a > 0 ? "Voksende" : "Aftagende";
+      monotoni = [ { interval: `]−∞ ; ∞[`, type } ];
+    }
+
+    return {
+      type: "monotoni",
+      text: `En funktion f har forskriften
+${fStr}
+Bestem f'(x) og angiv monotoniforhold for f.`,
+      dfStr, dfAnswer: dfStr, monotoni,
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
+      explanation: `f'(x) = ${dfStr}. Funktionen har ét interval da f' aldrig skifter fortegn.`
+    };
+  },
+
 ];
