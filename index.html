@@ -887,7 +887,7 @@ function checkMonotoniDF() {
     // Vis interval-vælger
     const intervalsDiv = document.getElementById("monotoni-intervals");
     intervalsDiv.innerHTML = `<p style="font-size:13px;color:#555;margin-bottom:8px;">Hvor mange intervaller har f?</p>`;
-    [2, 3].forEach(n => {
+    [1, 2, 3, 4].forEach(n => {
       const btn = document.createElement("button");
       btn.className = "mc-option";
       btn.textContent = n + " intervaller";
@@ -935,18 +935,20 @@ function buildMonotoniIntervals(n) {
       // Kun ét interval: ]−∞ ; ∞[ — ingen input nødvendig
       span("]−∞ ; ∞[");
     } else if (i === 0) {
-      // ]−∞ ; INPUT ]
-      span("]" + "−" + "∞ ;");
+      // Første interval: ]−∞ ; INPUT ]
+      span("]−∞ ;");
       input("mono_val_0");
       span("]");
     } else if (i === n - 1) {
-      // [ KOPIERET ; ∞[  — ingen input, grænsen kopieres fra forrige
-      span("", "mono_left_" + i);
-      span("[ ; ∞[");
-    } else {
-      // [ KOPIERET ; INPUT ]
-      span("", "mono_left_" + i);
+      // Sidste interval: [ INPUT ; ∞[ — eleven skriver selv grænsen
       span("[");
+      input("mono_val_" + i);
+      span("; ∞[");
+    } else {
+      // Mellemste interval: [ INPUT ; INPUT ]
+      span("[");
+      input("mono_val_" + i + "_left");
+      span(";");
       input("mono_val_" + i);
       span("]");
     }
@@ -994,14 +996,29 @@ function checkMonotoni() {
   }
   let allOk = true;
   // Tjek grænseværdier (kun hvis mere end 1 interval)
+  // Layout: interval 0 har mono_val_0 (højre grænse)
+  //         interval i (midterste) har mono_val_i_left og mono_val_i (højre grænse)
+  //         interval n-1 har mono_val_{n-1} (venstre grænse)
   if (n > 1) {
-    for (let i = 0; i < n - 1; i++) {
-      const inp = document.getElementById(`mono_val_${i}`);
-      if (inp) {
-        const val = normalizeAnswer(inp.value.replace(',', '.'));
-        const expected = normalizeAnswer(String(q.monotoni[i].interval.split(';')[1].replace(/[\[\]]/g, '').trim()));
-        if (val !== expected) allOk = false;
-        inp.disabled = true;
+    // Hjælpefunktion: hent forventet grænse fra interval-streng
+    const rightOf = (interval) => normalizeAnswer(String(interval.split(';')[1].replace(/[\[\]∞]/g, '').trim()));
+    const leftOf  = (interval) => normalizeAnswer(String(interval.split(';')[0].replace(/[\[\]∞−]/g, '').trim()));
+
+    for (let i = 0; i < n; i++) {
+      if (i === 0) {
+        // Tjek højre grænse for første interval
+        const inp = document.getElementById("mono_val_0");
+        if (inp) { if (normalizeAnswer(inp.value.replace(',','.')) !== rightOf(q.monotoni[0].interval)) allOk = false; inp.disabled = true; }
+      } else if (i === n - 1) {
+        // Tjek venstre grænse for sidste interval
+        const inp = document.getElementById("mono_val_" + i);
+        if (inp) { if (normalizeAnswer(inp.value.replace(',','.')) !== leftOf(q.monotoni[i].interval)) allOk = false; inp.disabled = true; }
+      } else {
+        // Tjek begge grænser for mellemste intervaller
+        const inpL = document.getElementById("mono_val_" + i + "_left");
+        const inpR = document.getElementById("mono_val_" + i);
+        if (inpL) { if (normalizeAnswer(inpL.value.replace(',','.')) !== leftOf(q.monotoni[i].interval)) allOk = false; inpL.disabled = true; }
+        if (inpR) { if (normalizeAnswer(inpR.value.replace(',','.')) !== rightOf(q.monotoni[i].interval)) allOk = false; inpR.disabled = true; }
       }
     }
   }
