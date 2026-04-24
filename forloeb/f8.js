@@ -1,126 +1,113 @@
 // F8 — Differentialregning og funktionsanalyse
+
+// Brug math.js til at differentiere symbolsk og formater til elevvenlig notation
+function mDerivative(exprStr) {
+  const raw = math.simplify(math.derivative(exprStr, 'x')).toString();
+  return raw
+    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\^\s*(\d+)\s*\)/g, (_, n, p) => `-${n}x^${p}`) // -(9 * x ^ 2) → -9x^2
+    .replace(/-\(\s*(\d+)\s*\*\s*x\s*\)/g, (_, n) => `-${n}x`)                        // -(6 * x) → -6x
+    .replace(/\s*\*\s*/g, '')                                                            // 6 * x → 6x
+    .replace(/\s*\^\s*/g, '^')                                                           // x ^ 2 → x^2
+    .trim();
+}
+
 GENERATORS.F8 = [
 
-  // 1. Bestem f'(x) og monotoniforhold
+  // 1. Bestem f'(x) og monotoniforhold — andengradspoly
   () => {
-    // Vælg type: andengradspoly (2 intervaller) eller kubisk (3 intervaller)
-    const isCubic = Math.random() > 0.5;
-    let a, b, fStr, dfStr, roots, monotoni;
+    const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
+    const xT = rnd(-5, 5);   // nulpunkt for f'
+    const b  = -2 * a * xT;
+    const c  = rnd(-8, 8);
 
-    if (isCubic) {
-      // f(x) = ax³ + bx, f'(x) = 3ax² + b
-      a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
-      const t = rnd(1, 4);
-      b = -3 * a * t * t;
-      const bStr = b >= 0 ? `+ ${b}x` : `- ${Math.abs(b)}x`;
-      fStr = `f(x) = ${a}x³ ${bStr}`;
-      const dfCoeff = 3 * a;
-      dfStr = `${dfCoeff}x² ${b >= 0 ? '+ ' + b : '− ' + Math.abs(b)}`;
-      roots = [-t, t].sort((x, y) => x - y);
+    const expr  = `${a}*x^2 + ${b}*x + ${c}`;
+    const dfStr = mDerivative(expr);
 
-      if (a > 0) {
-        monotoni = [
-          { interval: `]−∞ ; ${roots[0]}]`, type: "Aftagende" },
-          { interval: `[${roots[0]} ; ${roots[1]}]`, type: "Voksende" },
-          { interval: `[${roots[1]} ; ∞[`, type: "Aftagende" }
-        ];
-      } else {
-        monotoni = [
-          { interval: `]−∞ ; ${roots[0]}]`, type: "Voksende" },
-          { interval: `[${roots[0]} ; ${roots[1]}]`, type: "Aftagende" },
-          { interval: `[${roots[1]} ; ∞[`, type: "Voksende" }
-        ];
-      }
-    } else {
-      // f(x) = ax² + bx + c, f'(x) = 2ax + b
-      a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
-      const xT = rnd(-5, 5);
-      b = -2 * a * xT;
-      const c = rnd(-8, 8);
-      const bStr = b >= 0 ? `+ ${b}x` : `− ${Math.abs(b)}x`;
-      const cStr = c >= 0 ? `+ ${c}` : `− ${Math.abs(c)}`;
-      fStr = `f(x) = ${a}x² ${bStr} ${cStr}`;
-      dfStr = `${2*a}x ${b >= 0 ? '+ ' + b : '− ' + Math.abs(b)}`;
-      roots = [xT];
+    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+    const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
+    const fStr = `f(x) = ${a}x²${bStr}${cStr}`;
 
-      if (a > 0) {
-        monotoni = [
-          { interval: `]−∞ ; ${xT}]`, type: "Aftagende" },
-          { interval: `[${xT} ; ∞[`, type: "Voksende" }
-        ];
-      } else {
-        monotoni = [
-          { interval: `]−∞ ; ${xT}]`, type: "Voksende" },
-          { interval: `[${xT} ; ∞[`, type: "Aftagende" }
-        ];
-      }
-    }
+    const monotoni = a > 0
+      ? [ { interval: `]−∞ ; ${xT}]`, type: "Aftagende" },
+          { interval: `[${xT} ; ∞[`,  type: "Voksende"  } ]
+      : [ { interval: `]−∞ ; ${xT}]`, type: "Voksende"  },
+          { interval: `[${xT} ; ∞[`,  type: "Aftagende" } ];
 
     return {
       type: "monotoni",
       text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
-      dfStr,
-      dfAnswer: dfStr,
-      monotoni,
-      numIntervals: monotoni.length,
+      dfStr, dfAnswer: dfStr, monotoni,
       link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
-      explanation: `f'(x) = ${dfStr}. Nulpunkter for f': x = ${roots.join(' og x = ')}.`
+      explanation: `f'(x) = ${dfStr}. Nulpunkt for f': x = ${xT}.`
     };
   },
 
-  // 2. Identificér f(x) og f'(x) fra graf
+  // 2. Bestem f'(x) og monotoniforhold — kubisk
+  () => {
+    const a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
+    const t = rnd(1, 4);
+    const b = -3 * a * t * t;  // sikrer heltalsnulpunkter ±t for f'
+
+    const expr  = `${a}*x^3 + ${b}*x`;
+    const dfStr = mDerivative(expr);
+
+    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+    const fStr = `f(x) = ${a}x³${bStr}`;
+
+    const monotoni = a > 0
+      ? [ { interval: `]−∞ ; ${-t}]`,  type: "Voksende"  },
+          { interval: `[${-t} ; ${t}]`, type: "Aftagende" },
+          { interval: `[${t} ; ∞[`,     type: "Voksende"  } ]
+      : [ { interval: `]−∞ ; ${-t}]`,  type: "Aftagende" },
+          { interval: `[${-t} ; ${t}]`, type: "Voksende"  },
+          { interval: `[${t} ; ∞[`,     type: "Aftagende" } ];
+
+    return {
+      type: "monotoni",
+      text: `En funktion f har forskriften\n${fStr}\nBestem f'(x) og angiv monotoniforhold for f.`,
+      dfStr, dfAnswer: dfStr, monotoni,
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=229#c565",
+      explanation: `f'(x) = ${dfStr}. Nulpunkter for f': x = ${-t} og x = ${t}.`
+    };
+  },
+
+  // 3. Identificér f(x) og f'(x) fra graf
   () => {
     const colorPairs = [
-      { c1: '#27AE60', c2: '#8E44AD', n1: 'Grøn', n2: 'Lilla' },
-      { c1: '#E67E22', c2: '#2980B9', n1: 'Orange', n2: 'Blå' },
-      { c1: '#C0392B', c2: '#16A085', n1: 'Rød', n2: 'Grøn' },
+      { c1: '#27AE60', c2: '#8E44AD', n1: 'Grøn',   n2: 'Lilla' },
+      { c1: '#E67E22', c2: '#2980B9', n1: 'Orange',  n2: 'Blå'   },
+      { c1: '#C0392B', c2: '#16A085', n1: 'Rød',     n2: 'Grøn'  },
     ];
     const cp = colorPairs[rnd(0, colorPairs.length - 1)];
-    // Tilfældig kubisk f(x) = ax³ + bx² + cx
-    const a = (Math.random() > 0.5 ? 1 : -1) * rndF(0.1, 0.5, 2);
-    const b = rndF(-2, 2, 1);
-    const c = rndF(-4, 4, 1);
-    const fn = x => a * x * x * x + b * x * x + c * x;
-    const dfn = x => 3 * a * x * x + 2 * b * x + c;
-    const xs = linspace(-4, 4, 200);
-    // Bestem hvilken farve er f og hvilken er f'
+    const a  = (Math.random() > 0.5 ? 1 : -1) * rndF(0.1, 0.5, 2);
+    const b  = rndF(-2, 2, 1);
+    const c  = rndF(-4, 4, 1);
+    const fn  = x => a*x*x*x + b*x*x + c*x;
+    const dfn = x => 3*a*x*x + 2*b*x + c;
+    const xs  = linspace(-4, 4, 200);
     const fIsFirst = Math.random() > 0.5;
-    const fColor = fIsFirst ? cp.c1 : cp.c2;
-    const dfColor = fIsFirst ? cp.c2 : cp.c1;
-    const fName = fIsFirst ? cp.n1 : cp.n2;
-    const dfName = fIsFirst ? cp.n2 : cp.n1;
-    const t1 = { x: xs, y: xs.map(fn), mode: 'lines', line: { color: fColor, width: 2.5 }, name: fIsFirst ? cp.n1 : cp.n2 };
+    const fColor   = fIsFirst ? cp.c1 : cp.c2;
+    const dfColor  = fIsFirst ? cp.c2 : cp.c1;
+    const fName    = fIsFirst ? cp.n1 : cp.n2;
+    const dfName   = fIsFirst ? cp.n2 : cp.n1;
+    const t1 = { x: xs, y: xs.map(fn),  mode: 'lines', line: { color: fColor,  width: 2.5 }, name: fIsFirst ? cp.n1 : cp.n2 };
     const t2 = { x: xs, y: xs.map(dfn), mode: 'lines', line: { color: dfColor, width: 2.5 }, name: fIsFirst ? cp.n2 : cp.n1 };
     const yVals = [...xs.map(fn), ...xs.map(dfn)];
-    const yMin = Math.max(Math.min(...yVals), -10), yMax = Math.min(Math.max(...yVals), 10);
+    const yMin  = Math.max(Math.min(...yVals), -10);
+    const yMax  = Math.min(Math.max(...yVals),  10);
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
-      height: 320,
-      showlegend: true,
-      legend: { x: 0.02, y: 0.98 },
-      dragmode: 'pan',
+      height: 320, showlegend: true, legend: { x: 0.02, y: 0.98 }, dragmode: 'pan',
       xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [-4, 4] }),
       yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [yMin - 1, yMax + 1] })
     });
-    const graph = makePlotSpec([t1, t2], layout);
     return {
       type: "mc2",
       text: `Nedenfor ser du grafen for en funktion f(x) og grafen for den afledte funktion f'(x).\nForklar hvilken graf der hører til f(x) og hvilken graf der hører til f'(x).`,
-      graph,
+      graph: makePlotSpec([t1, t2], layout),
       questions: [
-        {
-          label: "f(x) er",
-          options: [cp.n1 + " graf", cp.n2 + " graf"],
-          correct: fIsFirst ? 0 : 1,
-          explanation: `f(x) er den ${fName.toLowerCase()} graf.`
-        },
-        {
-          label: "f'(x) er",
-          options: [cp.n1 + " graf", cp.n2 + " graf"],
-          correct: fIsFirst ? 1 : 0,
-          explanation: `f'(x) er den ${dfName.toLowerCase()} graf.`
-        }
+        { label: "f(x) er",  options: [cp.n1 + " graf", cp.n2 + " graf"], correct: fIsFirst ? 0 : 1, explanation: `f(x) er den ${fName.toLowerCase()} graf.`  },
+        { label: "f'(x) er", options: [cp.n1 + " graf", cp.n2 + " graf"], correct: fIsFirst ? 1 : 0, explanation: `f'(x) er den ${dfName.toLowerCase()} graf.` }
       ],
-      plotConfig: { responsive: true, displayModeBar: true, scrollZoom: true, modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'] },
       link: "https://laerebogimatematik2hhx.systime.dk/?id=133",
       explanation: `f(x) er den ${fName.toLowerCase()} graf — den afledte er et grad lavere og skifter fortegn ved f's toppunkter/bundpunkter.`
     };
