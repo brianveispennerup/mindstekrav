@@ -115,4 +115,38 @@ GENERATORS.F8 = [
     };
   },
 
+  // 3. Differentier f(x) og beregn f'(x₀) — andengradspoly
+  () => {
+    const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
+    const b  = rnd(-8, 8);
+    const c  = rnd(-8, 8);
+    const x0 = rnd(-4, 4) || 1;  // evalueringspunkt, undgå 0
+
+    // Byg dfStr direkte: f'(x) = 2ax + b (undgår math.js faktorisering)
+    const df1 = 2 * a, df0 = b;
+    const df0Str = df0 === 0 ? '' : (df0 > 0 ? ` + ${df0}` : ` - ${Math.abs(df0)}`);
+    const dfStr = `${df1}x${df0Str}`;
+
+    // f'(x0) = 2a*x0 + b
+    const dfAtX0 = df1 * x0 + df0;
+
+    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+    const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
+    const fStr = `f(x) = ${fmtCoef(a)}x²${bStr}${cStr}`;
+
+    return {
+      type: "fields",
+      text: `En funktion f har forskriften\n${fStr}\nDifferentier funktionen og beregn f'(${x0}).`,
+      fields: [
+        { prefix: "f'(x) =" },
+        { prefix: `f'(${x0}) =` }
+      ],
+      answers: [dfStr, String(dfAtX0)],
+      accept_tolerance: 0,
+      usePolyEqual: true,
+      link: ["https://laerebogimatematik2hhx.systime.dk/?id=230", "https://laerebogimatematik2hhx.systime.dk/?id=238"],
+      explanation: `f'(x) = ${dfStr}. f'(${x0}) = ${df1}·${x0} ${df0 >= 0 ? '+ ' + df0 : '- ' + Math.abs(df0)} = ${dfAtX0}.`
+    };
+  },
+
 ];
