@@ -136,7 +136,7 @@ GENERATORS.F8 = [
 
     return {
       type: "fields",
-      text: `En funktion f har forskriften\n${fStr}\nDifferentier funktionen og beregn f'(${x0}).`,
+      text: `En funktion f har forskriften\n${fStr}\nDifferentier funktionen og forklar betydningen af f'(${x0}).`,
       fields: [
         { prefix: "f'(x) =" },
         { prefix: `f'(${x0}) =` }
@@ -148,5 +148,64 @@ GENERATORS.F8 = [
       explanation: `f'(x) = ${dfStr}. f'(${x0}) = ${df1}·${x0} ${df0 >= 0 ? '+ ' + df0 : '- ' + Math.abs(df0)} = ${dfAtX0}.`
     };
   },
+
+  // 4. Angiv minimum/maksimum — andengradspoly
+  () => {
+    const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
+    const xT = rnd(-5, 5);          // toppunkt/bundpunkt x-koordinat
+    const b  = -2 * a * xT;
+    const c  = rnd(-8, 8);          // funktionsværdi forskudt
+
+    // f(xT) = a*xT² + b*xT + c
+    const fAtXT = a * xT * xT + b * xT + c;
+
+    const bStr = b === 0 ? '' : (b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`);
+    const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}`  : ` - ${Math.abs(c)}`);
+    const fStr = `f(x) = ${fmtCoef(a)}x²${bStr}${cStr}`;
+    const extremumType = a > 0 ? "minimum" : "maksimum";
+
+    return {
+      type: "fields",
+      text: `En funktion f har forskriften\n${fStr}\nAngiv ${extremumType} for funktionen.`,
+      fields: [
+        { prefix: `${extremumType.charAt(0).toUpperCase() + extremumType.slice(1)} er ved x =` },
+        { prefix: `${extremumType.charAt(0).toUpperCase() + extremumType.slice(1)} er` }
+      ],
+      answers: [String(xT), String(fAtXT)],
+      accept_tolerance: 0,
+      link: "https://laerebogimatematik2hhx.systime.dk/?id=228#c623",
+      explanation: `Toppunktet er (${xT}, ${fAtXT}). f'(x) = ${2*a}x ${b >= 0 ? '+ '+b : '- '+Math.abs(b)}, nulpunkt x = ${xT}.`
+    };
+  },
+
+  // 5. Differentier f(x) = a·eˣ + bx og forklar f'(x₀)
+  () => {
+    const a  = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 5);
+    const b  = rnd(-5, 5) || 1;    // undgå b=0
+    const x0 = 0;                  // altid 0 så eleverne kan regne i hovedet
+
+    // f'(x) = a·eˣ + b
+    const bStr = b > 0 ? ` + ${b}x` : ` - ${Math.abs(b)}x`;
+    const bDfStr = b > 0 ? ` + ${b}` : ` - ${Math.abs(b)}`;
+    const fStr  = `f(x) = ${fmtCoef(a)}eˣ${bStr}`;
+    const dfStr = `${fmtCoef(a)}eˣ${bDfStr}`;
+
+    // f'(x0) = a·e^x0 + b — afrund til 4 decimaler
+    const dfAtX0 = Math.round((a * Math.exp(x0) + b) * 10000) / 10000;
+
+    return {
+      type: "fields",
+      text: `En funktion f har forskriften\n${fStr}\nDifferentier funktionen og forklar betydningen af f'(${x0}).`,
+      fields: [
+        { prefix: "f'(x) =" },
+        { prefix: `f'(${x0}) =` }
+      ],
+      answers: [dfStr, String(dfAtX0)],
+      accept_tolerance: 0.01,   // tillad afrundingsfejl
+      usePolyEqual: false,
+      link: ["https://laerebogimatematik2hhx.systime.dk/?id=230", "https://laerebogimatematik2hhx.systime.dk/?id=238"],
+      explanation: `f'(x) = ${dfStr}. f'(${x0}) = ${fmtCoef(a)}·e^${x0} ${b >= 0 ? '+ '+b : '- '+Math.abs(b)} ≈ ${dfAtX0}.`
+    };
+  }
 
 ];
