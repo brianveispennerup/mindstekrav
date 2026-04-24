@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mindstekrav — Matematiktræner</title>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.27.0/plotly.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mathjs@13/lib/browser/math.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;padding:1.5rem;background:#f5f5f0;min-height:100vh;max-width:700px;margin:0 auto}
@@ -86,6 +85,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
   </div>
   <button class="primary" onclick="startQuiz()" style="width:100%;padding:0.8rem;font-size:15px">Start</button>
   <button class="primary" onclick="printPDF()" style="width:100%;padding:0.8rem;font-size:15px;margin-top:8px">🖨️ Udskriv opgaver som PDF</button>
+  <button class="primary" onclick="showHistorik()" style="width:100%;padding:0.8rem;font-size:15px;margin-top:8px">📊 Min historik</button>
 </div>
 
 <div id="screen-quiz" class="screen">
@@ -189,6 +189,42 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div style="display:flex;gap:8px">
       <button class="primary" onclick="startQuiz()" style="flex:1">Prøv igen</button>
       <button class="primary" onclick="goHome()" style="flex:1">Hovedmenu</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-historik" class="screen">
+  <div class="card">
+    <div id="historik-navn-prompt" style="display:none">
+      <h1 style="margin-bottom:0.5rem">Hvad hedder du?</h1>
+      <p style="font-size:14px;color:#666;margin-bottom:1rem">Dit navn gemmes kun på denne enhed.</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="historik-navn-input" placeholder="Dit navn..." style="flex:1;padding:0.55rem 0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px;" onkeydown="if(event.key==='Enter')gemNavn()">
+        <button class="primary" onclick="gemNavn()">Gem</button>
+      </div>
+    </div>
+    <div id="historik-indhold" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h1 id="historik-hilsen"></h1>
+        <button class="primary" style="font-size:12px;color:#999" onclick="nulstilNavn()">Skift navn</button>
+      </div>
+
+      <!-- Sammenligning denne uge vs sidste uge -->
+      <div id="historik-uge" style="margin-bottom:1rem;padding:0.75rem 1rem;background:#f5f5f0;border-radius:8px;font-size:14px;color:#555;"></div>
+
+      <!-- Oversigt per forløb -->
+      <div id="historik-forloeb" style="margin-bottom:1rem;"></div>
+
+      <!-- Rådata -->
+      <details style="margin-top:0.5rem">
+        <summary style="font-size:13px;color:#888;cursor:pointer;margin-bottom:0.5rem">Rådata</summary>
+        <div id="historik-radata" style="overflow-x:auto;"></div>
+      </details>
+
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="primary" onclick="goHome()" style="flex:1">Tilbage</button>
+        <button class="primary" onclick="if(confirm('Slet al historik?'))sletHistorik()" style="font-size:12px;color:#999">Slet historik</button>
+      </div>
     </div>
   </div>
 </div>
@@ -880,14 +916,14 @@ function checkMonotoniDF() {
   const inp = document.getElementById("monotoni-df-input");
   const val = normalizeAnswer(inp.value.replace(',', '.'));
   const expected = normalizeAnswer(q.dfAnswer.replace(',', '.'));
-  if (polyEqual(val, expected)) {
+  if (val === expected) {
     inp.style.background = '#EAF3DE';
     inp.disabled = true;
     document.getElementById("monotoni-df-btn").style.display = "none";
     // Vis interval-vælger
     const intervalsDiv = document.getElementById("monotoni-intervals");
     intervalsDiv.innerHTML = `<p style="font-size:13px;color:#555;margin-bottom:8px;">Hvor mange intervaller har f?</p>`;
-    [1, 2, 3, 4].forEach(n => {
+    [2, 3].forEach(n => {
       const btn = document.createElement("button");
       btn.className = "mc-option";
       btn.textContent = n + " intervaller";
@@ -911,71 +947,52 @@ function checkMonotoniDF() {
 
 function buildMonotoniIntervals(n) {
   const intervalsDiv = document.getElementById("monotoni-intervals");
-  intervalsDiv.querySelectorAll(".monotoni-row").forEach(r => r.remove());
-
+  // Fjern gamle inputrækker
+  const old = intervalsDiv.querySelectorAll(".monotoni-row");
+  old.forEach(r => r.remove());
   for (let i = 0; i < n; i++) {
     const row = document.createElement("div");
     row.className = "monotoni-row";
     row.style.cssText = "display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;font-size:14px;color:#555;";
-
-    const span = (txt, id) => {
-      const s = document.createElement("span");
-      s.textContent = txt;
-      if (id) s.id = id;
-      row.appendChild(s);
-    };
-    const input = (id) => {
+    const leftBracket = i === 0 ? "]−∞ ;" : (i === n - 1 ? "[" : "[");
+    const rightBracket = i === n - 1 ? "; ∞[" : ";";
+    if (i === 0) {
+      row.innerHTML = `<span>]−∞ ;</span>`;
       const inp = document.createElement("input");
-      inp.type = "text"; inp.id = id;
+      inp.type = "text"; inp.id = `mono_val_${i}`;
       inp.style.cssText = "width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;";
       row.appendChild(inp);
-    };
-
-    if (n === 1) {
-      // Kun ét interval: ]−∞ ; ∞[ — ingen input nødvendig
-      span("]−∞ ; ∞[");
-    } else if (i === 0) {
-      // Første interval: ]−∞ ; INPUT ]
-      span("]−∞ ;");
-      input("mono_val_0");
-      span("]");
+      row.innerHTML += `<span>]</span>`;
     } else if (i === n - 1) {
-      // Sidste interval: [ INPUT ; ∞[ — eleven skriver selv grænsen
-      span("[");
-      input("mono_val_" + i);
-      span("; ∞[");
+      row.innerHTML = `<span id="mono_left_${i}"></span><span>[</span><span>; ∞[</span>`;
     } else {
-      // Mellemste interval: [ INPUT ; INPUT ]
-      span("[");
-      input("mono_val_" + i + "_left");
-      span(";");
-      input("mono_val_" + i);
-      span("]");
+      row.innerHTML = `<span id="mono_left_${i}"></span><span>[</span>`;
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.id = `mono_val_${i}`;
+      inp.style.cssText = "width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;";
+      row.appendChild(inp);
+      row.innerHTML += `<span>[</span>`;
     }
-
-    // Voksende/Aftagende knapper
+    // Voksende/aftagende knapper
     const vBtn = document.createElement("button");
-    vBtn.className = "mc-option"; vBtn.textContent = "Voksende";
-    vBtn.dataset.row = String(i); vBtn.dataset.val = "V"; vBtn.dataset.selected = "false";
+    vBtn.className = "mc-option"; vBtn.textContent = "Voksende"; vBtn.dataset.row = i; vBtn.dataset.val = "V";
     vBtn.style.cssText = "display:inline-block;width:auto;padding:4px 10px;margin:0;";
     const aBtn = document.createElement("button");
-    aBtn.className = "mc-option"; aBtn.textContent = "Aftagende";
-    aBtn.dataset.row = String(i); aBtn.dataset.val = "A"; aBtn.dataset.selected = "false";
+    aBtn.className = "mc-option"; aBtn.textContent = "Aftagende"; aBtn.dataset.row = i; aBtn.dataset.val = "A";
     aBtn.style.cssText = "display:inline-block;width:auto;padding:4px 10px;margin:0;";
-
     [vBtn, aBtn].forEach(b => {
       b.onclick = () => {
-        [vBtn, aBtn].forEach(x => { x.style.borderColor="#ddd"; x.style.background="#fff"; x.dataset.selected="false"; });
-        b.style.borderColor = "#185FA5"; b.style.background = "#E6F1FB"; b.dataset.selected = "true";
-        // Kopiér grænseværdien fra dette intervals input til næste intervals venstre label
-        const valInp = document.getElementById("mono_val_" + i);
+        [vBtn, aBtn].forEach(x => { x.style.borderColor="#ddd"; x.style.background="#fff"; });
+        b.style.borderColor = "#185FA5"; b.style.background = "#E6F1FB";
+        b.dataset.selected = "true";
+        // Kopiér grænseværdi til næste interval
+        const valInp = document.getElementById(`mono_val_${i}`);
         if (valInp && i < n - 1) {
-          const nextLeft = document.getElementById("mono_left_" + (i + 1));
+          const nextLeft = document.getElementById(`mono_left_${i+1}`);
           if (nextLeft) nextLeft.textContent = valInp.value + " ;";
         }
       };
     });
-
     row.appendChild(vBtn); row.appendChild(aBtn);
     intervalsDiv.appendChild(row);
   }
@@ -995,36 +1012,19 @@ function checkMonotoni() {
     return;
   }
   let allOk = true;
-  // Tjek grænseværdier (kun hvis mere end 1 interval)
-  // Layout: interval 0 har mono_val_0 (højre grænse)
-  //         interval i (midterste) har mono_val_i_left og mono_val_i (højre grænse)
-  //         interval n-1 har mono_val_{n-1} (venstre grænse)
-  if (n > 1) {
-    // Hjælpefunktion: hent forventet grænse fra interval-streng
-    const rightOf = (interval) => normalizeAnswer(String(interval.split(';')[1].replace(/[\[\]∞]/g, '').trim()));
-    const leftOf  = (interval) => normalizeAnswer(String(interval.split(';')[0].replace(/[\[\]∞−]/g, '').trim()));
-
-    for (let i = 0; i < n; i++) {
-      if (i === 0) {
-        // Tjek højre grænse for første interval
-        const inp = document.getElementById("mono_val_0");
-        if (inp) { if (normalizeAnswer(inp.value.replace(',','.')) !== rightOf(q.monotoni[0].interval)) allOk = false; inp.disabled = true; }
-      } else if (i === n - 1) {
-        // Tjek venstre grænse for sidste interval
-        const inp = document.getElementById("mono_val_" + i);
-        if (inp) { if (normalizeAnswer(inp.value.replace(',','.')) !== leftOf(q.monotoni[i].interval)) allOk = false; inp.disabled = true; }
-      } else {
-        // Tjek begge grænser for mellemste intervaller
-        const inpL = document.getElementById("mono_val_" + i + "_left");
-        const inpR = document.getElementById("mono_val_" + i);
-        if (inpL) { if (normalizeAnswer(inpL.value.replace(',','.')) !== leftOf(q.monotoni[i].interval)) allOk = false; inpL.disabled = true; }
-        if (inpR) { if (normalizeAnswer(inpR.value.replace(',','.')) !== rightOf(q.monotoni[i].interval)) allOk = false; inpR.disabled = true; }
-      }
+  // Tjek grænseværdier
+  for (let i = 0; i < n - 1; i++) {
+    const inp = document.getElementById(`mono_val_${i}`);
+    if (inp) {
+      const val = normalizeAnswer(inp.value.replace(',', '.'));
+      const expected = normalizeAnswer(String(q.monotoni[i].interval.split(';')[1].replace(/[\[\]]/g, '').trim()));
+      if (val !== expected) allOk = false;
+      inp.disabled = true;
     }
   }
   // Tjek voksende/aftagende
   for (let i = 0; i < n; i++) {
-    const btns = document.querySelectorAll(`.monotoni-row [data-row="${i}"][data-selected="true"]`);
+    const btns = document.querySelectorAll(`.monotoni-row:nth-child(${i + 3}) [data-selected="true"]`);
     const selected = btns.length > 0 ? btns[0].dataset.val : null;
     const expected = q.monotoni[i].type === "Voksende" ? "V" : "A";
     if (selected !== expected) allOk = false;
@@ -1274,27 +1274,6 @@ function checkMC(chosen, btn, q) {
   else { btn.classList.remove("disabled"); btn.classList.add("wrong"); document.querySelectorAll(".mc-option")[q.correct].classList.remove("disabled"); document.querySelectorAll(".mc-option")[q.correct].classList.add("show-correct"); showFeedback(false, "Forkert. " + q.explanation); wrong_count++; }
   document.getElementById("next-btn").style.display = "block";
 }
-// Normaliser polynomium-udtryk så rækkefølge af led ikke har betydning
-// "-3x^2+48" og "48-3x^2" bliver begge til "-3x^248" (sorterede led)
-// Sammenlign to polynomium-udtryk numerisk ved 3 x-værdier
-// Accepterer -4x+8, 8-4x, 8-8x osv. uanset rækkefølge og notation
-function polyEqual(a, b) {
-  try {
-    // Rens begge udtryk til evaluerbar JS-syntax
-    function toJS(s) {
-      return s
-        .replace(/−/g, '-')       // unicode minus
-        .replace(/(\d)x/g, '$1*x')     // 4x → 4*x
-        .replace(/([a-z])(\d)/g, '$1*$2') // x2 → x*2 (sjælden)
-        .replace(/\^/g, '**')          // x^2 → x**2
-        .toLowerCase();
-    }
-    const fa = new Function('x', 'return ' + toJS(a));
-    const fb = new Function('x', 'return ' + toJS(b));
-    return [1, 3, -2].every(x => Math.abs(fa(x) - fb(x)) < 0.001);
-  } catch(e) { return false; }
-}
-
 function normalizeAnswer(s) {
   return s.toLowerCase().trim()
     .replace(/\s+/g, '')         // fjern alle mellemrum
@@ -1440,6 +1419,18 @@ function nextQuestion() { qIndex++; if (qIndex >= sessionQs.length) showResult()
 function showResult() {
   const tot = correct_count + wrong_count;
   const pct = tot > 0 ? Math.round(correct_count / tot * 100) : 0;
+  // Gem session i localStorage
+  try {
+    const sessions = JSON.parse(localStorage.getItem('mk_sessions') || '[]');
+    sessions.push({
+      dato: new Date().toISOString(),
+      forloeb: selected,
+      rigtige: correct_count,
+      forkerte: wrong_count,
+      pct
+    });
+    localStorage.setItem('mk_sessions', JSON.stringify(sessions));
+  } catch(e) {}
   document.getElementById("res-correct").textContent = correct_count;
   document.getElementById("res-wrong").textContent = wrong_count;
   const pctEl = document.getElementById("res-pct");
@@ -1449,6 +1440,131 @@ function showResult() {
   show("screen-result");
 }
 init();
+
+// ===================== HISTORIK =====================
+function showHistorik() {
+  show('screen-historik');
+  const navn = localStorage.getItem('mk_navn');
+  if (!navn) {
+    document.getElementById('historik-navn-prompt').style.display = 'block';
+    document.getElementById('historik-indhold').style.display = 'none';
+    setTimeout(() => document.getElementById('historik-navn-input').focus(), 150);
+  } else {
+    visHistorikIndhold(navn);
+  }
+}
+
+function gemNavn() {
+  const inp = document.getElementById('historik-navn-input');
+  const navn = inp.value.trim();
+  if (!navn) return;
+  localStorage.setItem('mk_navn', navn);
+  document.getElementById('historik-navn-prompt').style.display = 'none';
+  visHistorikIndhold(navn);
+}
+
+function nulstilNavn() {
+  localStorage.removeItem('mk_navn');
+  document.getElementById('historik-indhold').style.display = 'none';
+  document.getElementById('historik-navn-prompt').style.display = 'block';
+  document.getElementById('historik-navn-input').value = '';
+  setTimeout(() => document.getElementById('historik-navn-input').focus(), 150);
+}
+
+function sletHistorik() {
+  localStorage.removeItem('mk_sessions');
+  visHistorikIndhold(localStorage.getItem('mk_navn'));
+}
+
+function visHistorikIndhold(navn) {
+  document.getElementById('historik-navn-prompt').style.display = 'none';
+  document.getElementById('historik-indhold').style.display = 'block';
+  document.getElementById('historik-hilsen').textContent = 'Hej ' + navn + '!';
+
+  const sessions = JSON.parse(localStorage.getItem('mk_sessions') || '[]');
+
+  // ---- Uge-beregning ----
+  const nu = new Date();
+  const ugeStart = (d, ugerBack) => {
+    const d2 = new Date(d);
+    d2.setDate(d2.getDate() - d2.getDay() + 1 - ugerBack * 7); // mandag
+    d2.setHours(0,0,0,0);
+    return d2;
+  };
+  const dennUgeStart = ugeStart(nu, 0);
+  const sidsteUgeStart = ugeStart(nu, 1);
+
+  const dennUge = sessions.filter(s => new Date(s.dato) >= dennUgeStart);
+  const sidsteUge = sessions.filter(s => new Date(s.dato) >= sidsteUgeStart && new Date(s.dato) < dennUgeStart);
+
+  const avgPct = arr => arr.length === 0 ? null : Math.round(arr.reduce((s,x) => s + x.pct, 0) / arr.length);
+  const dennPct = avgPct(dennUge);
+  const sidstePct = avgPct(sidsteUge);
+
+  const ugeDiv = document.getElementById('historik-uge');
+  if (sessions.length === 0) {
+    ugeDiv.textContent = 'Du har ikke gennemført nogen sessioner endnu.';
+  } else if (dennPct === null) {
+    ugeDiv.textContent = 'Ingen sessioner denne uge endnu.';
+  } else {
+    const sesssDiff = dennUge.length - sidsteUge.length;
+    const sessColor = sesssDiff >= 0 ? '#27500A' : '#791F1F';
+    const sessDiffStr = sesssDiff > 0 ? `+${sesssDiff}` : String(sesssDiff);
+
+    let ugeHtml = `<strong>Denne uge:</strong> ${dennUge.length} session${dennUge.length !== 1 ? 'er' : ''}`;
+    if (sidsteUge.length > 0) {
+      ugeHtml += ` <span style="color:${sessColor};font-weight:600">(${sessDiffStr} ift. sidste uge med ${sidsteUge.length})</span>`;
+    }
+    ugeHtml += `, ${dennPct}% rigtige i snit`;
+    if (sidstePct !== null) {
+      const diff = dennPct - sidstePct;
+      const diffStr = diff >= 0 ? `+${diff}%` : `${diff}%`;
+      const color = diff >= 0 ? '#27500A' : '#791F1F';
+      ugeHtml += ` <span style="color:${color};font-weight:600">(${diffStr} ift. sidste uge på ${sidstePct}%)</span>`;
+    }
+    ugeHtml += '.';
+    ugeDiv.innerHTML = ugeHtml;
+  }
+
+  // ---- Oversigt per forløb ----
+  const forloebDiv = document.getElementById('historik-forloeb');
+  forloebDiv.innerHTML = '<p style="font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Oversigt per forløb</p>';
+
+  if (sessions.length === 0) {
+    forloebDiv.innerHTML += '<p style="font-size:14px;color:#888">Ingen data endnu.</p>';
+  } else {
+    Object.entries(FORLOEB).forEach(([key, navn]) => {
+      const fs = sessions.filter(s => s.forloeb === key);
+      if (fs.length === 0) return;
+      const snit = avgPct(fs);
+      const color = snit >= 80 ? '#27500A' : snit >= 50 ? '#7A5800' : '#791F1F';
+      const bg    = snit >= 80 ? '#EAF3DE' : snit >= 50 ? '#FFF8E1' : '#FCEBEB';
+      forloebDiv.innerHTML += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0ec;font-size:14px;">
+          <span style="color:#333"><strong>${key}</strong> — ${navn}</span>
+          <span style="display:flex;gap:12px;align-items:center">
+            <span style="color:#666">${fs.length} session${fs.length !== 1 ? 'er' : ''}</span>
+            <span style="background:${bg};color:${color};padding:2px 10px;border-radius:12px;font-weight:600">${snit}%</span>
+          </span>
+        </div>`;
+    });
+  }
+
+  // ---- Rådata ----
+  const raDiv = document.getElementById('historik-radata');
+  if (sessions.length === 0) {
+    raDiv.innerHTML = '<p style="font-size:13px;color:#888">Ingen data.</p>';
+  } else {
+    let tbl = '<table class="data-table" style="font-size:12px"><thead><tr><th>Dato</th><th>Forløb</th><th>Rigtige</th><th>Forkerte</th><th>Score</th></tr></thead><tbody>';
+    [...sessions].reverse().forEach(s => {
+      const d = new Date(s.dato);
+      const datoStr = d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      tbl += `<tr><td>${datoStr}</td><td>${s.forloeb}</td><td>${s.rigtige}</td><td>${s.forkerte}</td><td>${s.pct}%</td></tr>`;
+    });
+    tbl += '</tbody></table>';
+    raDiv.innerHTML = tbl;
+  }
+}
 </script>
 </body>
 </html>
