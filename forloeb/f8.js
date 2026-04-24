@@ -94,8 +94,8 @@ GENERATORS.F8 = [
     const t1 = { x: xs, y: xs.map(fn),  mode: 'lines', line: { color: fColor,  width: 2.5 }, name: fIsFirst ? cp.n1 : cp.n2 };
     const t2 = { x: xs, y: xs.map(dfn), mode: 'lines', line: { color: dfColor, width: 2.5 }, name: fIsFirst ? cp.n2 : cp.n1 };
     const yVals = [...xs.map(fn), ...xs.map(dfn)];
-    const yMin  = Math.max(Math.min(...yVals), -10);
-    const yMax  = Math.min(Math.max(...yVals),  10);
+    const yMin  = Math.min(...yVals);
+    const yMax  = Math.max(...yVals);
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
       height: 320, showlegend: true, legend: { x: 0.02, y: 0.98 }, dragmode: 'pan',
       xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [-4, 4] }),
@@ -109,6 +109,7 @@ GENERATORS.F8 = [
         { label: "f(x) er",  options: [cp.n1 + " graf", cp.n2 + " graf"], correct: fIsFirst ? 0 : 1, explanation: `f(x) er den ${fName.toLowerCase()} graf.`  },
         { label: "f'(x) er", options: [cp.n1 + " graf", cp.n2 + " graf"], correct: fIsFirst ? 1 : 0, explanation: `f'(x) er den ${dfName.toLowerCase()} graf.` }
       ],
+      plotConfig: { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ["toImage", "sendDataToCloud"], scrollZoom: true },
       link: "https://laerebogimatematik2hhx.systime.dk/?id=133",
       explanation: `f(x) er den ${fName.toLowerCase()} graf — den afledte er et grad lavere og skifter fortegn ved f's toppunkter/bundpunkter.`
     };
