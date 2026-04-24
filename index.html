@@ -886,7 +886,7 @@ function checkMonotoniDF() {
     // Vis interval-vælger
     const intervalsDiv = document.getElementById("monotoni-intervals");
     intervalsDiv.innerHTML = `<p style="font-size:13px;color:#555;margin-bottom:8px;">Hvor mange intervaller har f?</p>`;
-    [2, 3].forEach(n => {
+    [1, 2, 3, 4].forEach(n => {
       const btn = document.createElement("button");
       btn.className = "mc-option";
       btn.textContent = n + " intervaller";
@@ -910,52 +910,63 @@ function checkMonotoniDF() {
 
 function buildMonotoniIntervals(n) {
   const intervalsDiv = document.getElementById("monotoni-intervals");
-  // Fjern gamle inputrækker
-  const old = intervalsDiv.querySelectorAll(".monotoni-row");
-  old.forEach(r => r.remove());
+  intervalsDiv.querySelectorAll(".monotoni-row").forEach(r => r.remove());
+
   for (let i = 0; i < n; i++) {
     const row = document.createElement("div");
     row.className = "monotoni-row";
     row.style.cssText = "display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;font-size:14px;color:#555;";
-    const leftBracket = i === 0 ? "]−∞ ;" : (i === n - 1 ? "[" : "[");
-    const rightBracket = i === n - 1 ? "; ∞[" : ";";
+
+    const addSpan = (txt, id) => {
+      const s = document.createElement("span");
+      s.textContent = txt;
+      if (id) s.id = id;
+      row.appendChild(s);
+      return s;
+    };
+    const addInput = (id) => {
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.id = id;
+      inp.style.cssText = "width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;";
+      row.appendChild(inp);
+      return inp;
+    };
+
     if (i === 0) {
-      row.innerHTML = `<span>]−∞ ;</span>`;
-      const inp = document.createElement("input");
-      inp.type = "text"; inp.id = `mono_val_${i}`;
-      inp.style.cssText = "width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;";
-      row.appendChild(inp);
-      row.innerHTML += `<span>]</span>`;
+      addSpan("]−∞ ;");
+      addInput("mono_val_0");
+      addSpan("]");
     } else if (i === n - 1) {
-      row.innerHTML = `<span id="mono_left_${i}"></span><span>[</span><span>; ∞[</span>`;
+      addSpan("", "mono_left_" + i);
+      addSpan("[");
+      addSpan(" ; ∞[");
     } else {
-      row.innerHTML = `<span id="mono_left_${i}"></span><span>[</span>`;
-      const inp = document.createElement("input");
-      inp.type = "text"; inp.id = `mono_val_${i}`;
-      inp.style.cssText = "width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;";
-      row.appendChild(inp);
-      row.innerHTML += `<span>[</span>`;
+      addSpan("", "mono_left_" + i);
+      addSpan("[");
+      addInput("mono_val_" + i);
+      addSpan("]");
     }
-    // Voksende/aftagende knapper
+
     const vBtn = document.createElement("button");
     vBtn.className = "mc-option"; vBtn.textContent = "Voksende"; vBtn.dataset.row = i; vBtn.dataset.val = "V";
     vBtn.style.cssText = "display:inline-block;width:auto;padding:4px 10px;margin:0;";
     const aBtn = document.createElement("button");
     aBtn.className = "mc-option"; aBtn.textContent = "Aftagende"; aBtn.dataset.row = i; aBtn.dataset.val = "A";
     aBtn.style.cssText = "display:inline-block;width:auto;padding:4px 10px;margin:0;";
+
     [vBtn, aBtn].forEach(b => {
       b.onclick = () => {
-        [vBtn, aBtn].forEach(x => { x.style.borderColor="#ddd"; x.style.background="#fff"; });
+        [vBtn, aBtn].forEach(x => { x.style.borderColor="#ddd"; x.style.background="#fff"; x.dataset.selected = "false"; });
         b.style.borderColor = "#185FA5"; b.style.background = "#E6F1FB";
         b.dataset.selected = "true";
-        // Kopiér grænseværdi til næste interval
-        const valInp = document.getElementById(`mono_val_${i}`);
+        const valInp = document.getElementById("mono_val_" + i);
         if (valInp && i < n - 1) {
-          const nextLeft = document.getElementById(`mono_left_${i+1}`);
+          const nextLeft = document.getElementById("mono_left_" + (i + 1));
           if (nextLeft) nextLeft.textContent = valInp.value + " ;";
         }
       };
     });
+
     row.appendChild(vBtn); row.appendChild(aBtn);
     intervalsDiv.appendChild(row);
   }
@@ -987,7 +998,7 @@ function checkMonotoni() {
   }
   // Tjek voksende/aftagende
   for (let i = 0; i < n; i++) {
-    const btns = document.querySelectorAll(`.monotoni-row:nth-child(${i + 3}) [data-selected="true"]`);
+    const btns = document.querySelectorAll(`.monotoni-row [data-row="${i}"][data-selected="true"]`);
     const selected = btns.length > 0 ? btns[0].dataset.val : null;
     const expected = q.monotoni[i].type === "Voksende" ? "V" : "A";
     if (selected !== expected) allOk = false;

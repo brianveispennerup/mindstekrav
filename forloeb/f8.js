@@ -3,13 +3,12 @@ GENERATORS.F8 = [
 
   // 1. Bestem f'(x) og monotoniforhold
   () => {
-    // Vælg type: kubisk eller andengradspoly
+    // Vælg type: andengradspoly (2 intervaller) eller kubisk (3 intervaller)
     const isCubic = Math.random() > 0.5;
     let a, b, fStr, dfStr, roots, monotoni;
 
     if (isCubic) {
       // f(x) = ax³ + bx, f'(x) = 3ax² + b
-      // Vælg a og b så f'(x) = 0 giver hele tal: -b/3a = t² → b = -3a*t²
       a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 3);
       const t = rnd(1, 4);
       b = -3 * a * t * t;
@@ -33,16 +32,15 @@ GENERATORS.F8 = [
         ];
       }
     } else {
-      // f(x) = ax² + bx + c, f'(x) = 2ax + b, nulpunkt x = -b/2a
+      // f(x) = ax² + bx + c, f'(x) = 2ax + b
       a = (Math.random() > 0.5 ? 1 : -1) * rnd(1, 4);
-      const xT = rnd(-5, 5); // nulpunkt for f'
+      const xT = rnd(-5, 5);
       b = -2 * a * xT;
       const c = rnd(-8, 8);
       const bStr = b >= 0 ? `+ ${b}x` : `− ${Math.abs(b)}x`;
       const cStr = c >= 0 ? `+ ${c}` : `− ${Math.abs(c)}`;
       fStr = `f(x) = ${a}x² ${bStr} ${cStr}`;
-      const dfb = b;
-      dfStr = `${2*a}x ${dfb >= 0 ? '+ ' + dfb : '− ' + Math.abs(dfb)}`;
+      dfStr = `${2*a}x ${b >= 0 ? '+ ' + b : '− ' + Math.abs(b)}`;
       roots = [xT];
 
       if (a > 0) {
