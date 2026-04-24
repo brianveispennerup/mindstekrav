@@ -206,7 +206,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div id="historik-indhold" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h1 id="historik-hilsen"></h1>
-        <button class="primary" style="font-size:12px;color:#999" onclick="nulstilNavn()">Skift navn</button>
+
       </div>
 
       <!-- Sammenligning denne uge vs sidste uge -->
@@ -1473,7 +1473,11 @@ function nulstilNavn() {
 
 function sletHistorik() {
   localStorage.removeItem('mk_sessions');
-  visHistorikIndhold(localStorage.getItem('mk_navn'));
+  localStorage.removeItem('mk_navn');
+  document.getElementById('historik-indhold').style.display = 'none';
+  document.getElementById('historik-navn-prompt').style.display = 'block';
+  document.getElementById('historik-navn-input').value = '';
+  setTimeout(() => document.getElementById('historik-navn-input').focus(), 150);
 }
 
 function visHistorikIndhold(navn) {
