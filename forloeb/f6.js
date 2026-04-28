@@ -1,29 +1,29 @@
 // F6 — Sandsynlighedsregning
 GENERATORS.F6 = [
 
-  // 1. Sandsynlighedsfelt for kuglepose
+  // 1. Sandsynlighedsfelt for kuglepose — eleven bygger selv tabellen
   () => {
     const farver = ['røde', 'blå', 'gule', 'grønne', 'hvide', 'sorte'];
-    // Vælg 3 tilfældige farver
     const shuffledFarver = shuffle([...farver]);
-    const valgteFarver = shuffledFarver.slice(0, 3);
-    // Tilfældigt antal af hver farve (1-5)
+    const n = rnd(2, 5); // antal farver/udfald
+    const valgteFarver = shuffledFarver.slice(0, n);
     const antal = valgteFarver.map(() => rnd(1, 5));
     const tot = antal.reduce((a, b) => a + b, 0);
     const probs = antal.map(a => Math.round(a / tot * 100) / 100);
-    // Vis farvenavn uden "e" til sidst som udfald
-    const udfaldsNavn = valgteFarver.map(f => f.slice(0, -1)); // "rød", "blå" etc
+    // Fix rounding
+    const diff = Math.round((1 - probs.reduce((a,b)=>a+b,0)) * 100) / 100;
+    probs[0] = Math.round((probs[0] + diff) * 100) / 100;
+    // Fulde farvenavne til u-rækken: "rød", "blå" etc
+    const udfaldsNavn = valgteFarver.map(f => f.endsWith('e') ? f.slice(0, -1) : f);
     const beskriv = valgteFarver.map((f, i) => `${antal[i]} ${f}`).join(', ');
     return {
-      type: "table",
+      type: "table-dynamic",
       text: `Der trækkes én kugle tilfældigt fra en pose med ${beskriv} kugler.\nOpstil et sandsynlighedsfelt (U, P) ved hjælp af en tabel, som viser udfaldsrummet og sandsynligheden for hvert udfald.`,
-      tableHeaders: ["u", ...udfaldsNavn],
-      tableRows: [["P(u)"]],
-      tableFooter: null,
-      inputCols: [1, 2, 3],
-      answers: [probs.map(p => fmt(p))],
+      correctCount: n,
+      udfaldsNavn,
+      answers: probs.map(p => fmt(p)),
       link: "https://laerebogimatematik2hhx.systime.dk/?id=253#c903",
-      explanation: `Total antal kugler: ${tot}. P(${udfaldsNavn[0]}) = ${antal[0]}/${tot} = ${fmt(probs[0])}, P(${udfaldsNavn[1]}) = ${antal[1]}/${tot} = ${fmt(probs[1])}, P(${udfaldsNavn[2]}) = ${antal[2]}/${tot} = ${fmt(probs[2])}.`
+      explanation: `Total antal kugler: ${tot}. ` + udfaldsNavn.map((u, i) => `P(${u}) = ${antal[i]}/${tot} = ${fmt(probs[i])}`).join(', ') + '.'
     };
   },
 
