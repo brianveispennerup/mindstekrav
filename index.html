@@ -1456,6 +1456,56 @@ function showResult() {
 }
 init();
 
+// ===================== TABLE-DYNAMIC =====================
+function buildDynamicTable() {
+  const q = sessionQs[qIndex];
+  const countInp = document.getElementById('td-count-input');
+  const n = parseInt(countInp.value);
+  if (isNaN(n) || n < 1 || n > 10) { countInp.style.borderColor = '#c0392b'; return; }
+  countInp.style.borderColor = '#ccc';
+  if (n !== q.correctCount) {
+    countInp.style.borderColor = '#c0392b';
+    showFeedback(false, 'Antallet af udfald er ikke korrekt. Prøv igen.');
+    return;
+  }
+  const container = document.getElementById('table-dynamic-container');
+  let html = '<table class="data-table"><thead><tr><th>u</th>';
+  for (let i = 0; i < n; i++) {
+    html += `<th style="font-weight:600">${q.udfaldsNavn[i]}</th>`;
+  }
+  html += '</tr></thead><tbody><tr><td>P(u)</td>';
+  for (let i = 0; i < n; i++) {
+    html += `<td><input type="text" id="td-p-${i}" placeholder="P" style="width:70px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;" onkeydown="if(event.key==='Enter')checkDynamicTable()"></td>`;
+  }
+  html += '</tr></tbody></table>';
+  container.innerHTML = html;
+  container.style.display = 'block';
+  document.getElementById('td-check-btn').style.display = 'block';
+  setTimeout(() => document.getElementById('td-p-0').focus(), 100);
+}
+
+function checkDynamicTable() {
+  if (answered) return;
+  const q = sessionQs[qIndex];
+  const n = q.correctCount;
+  let allOk = true;
+  for (let i = 0; i < n; i++) {
+    const pInp = document.getElementById('td-p-' + i);
+    const pVal = normalizeAnswer(pInp.value.trim().replace(',', '.'));
+    const pExp = normalizeAnswer(String(q.answers[i]).replace(',', '.'));
+    if (pVal === pExp) { pInp.style.background = '#EAF3DE'; pInp.disabled = true; }
+    else { pInp.style.background = '#FCEBEB'; allOk = false; }
+  }
+  if (allOk) {
+    showFeedback(true, 'Korrekt! ' + q.explanation);
+    answered = true; correct_count++;
+  } else {
+    showFeedback(false, 'Ikke helt rigtigt. Tjek dine sandsynligheder. ' + q.explanation);
+    answered = true; wrong_count++;
+  }
+  document.getElementById('next-btn').style.display = 'block';
+}
+
 // ===================== HISTORIK =====================
 function showHistorik() {
   show('screen-historik');
