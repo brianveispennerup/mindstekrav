@@ -70,6 +70,7 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
 </div>
 
 <div id="screen-select" class="screen active">
+  <button class="f-btn" onclick="showHistorik()" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:24px;line-height:1">⭐</span>Min fremgang</button>
   <div class="card">
     <h1>Mindstekrav</h1>
     <p class="sub">Vælg et forløb.</p>
@@ -200,6 +201,32 @@ h1{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
     <div style="display:flex;gap:8px">
       <button class="primary" onclick="startQuiz()" style="flex:1">Prøv igen</button>
       <button class="primary" onclick="goHome()" style="flex:1">Hovedmenu</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-historik" class="screen">
+  <div class="card">
+    <div id="historik-navn-prompt" style="display:none">
+      <h1 style="margin-bottom:0.5rem">Hvad hedder du?</h1>
+      <p style="font-size:14px;color:#666;margin-bottom:1rem">Dit navn gemmes kun på denne enhed.</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="historik-navn-input" placeholder="Dit navn..." style="flex:1;padding:0.55rem 0.75rem;border:1px solid #ccc;border-radius:8px;font-size:15px;" onkeydown="if(event.key==='Enter')gemNavn()">
+        <button class="primary" onclick="gemNavn()">Gem</button>
+      </div>
+    </div>
+    <div id="historik-indhold" style="display:none">
+      <div style="margin-bottom:1rem"><h1 id="historik-hilsen"></h1></div>
+      <div id="historik-uge" style="margin-bottom:1rem;padding:0.75rem 1rem;background:#f5f5f0;border-radius:8px;font-size:14px;color:#555;"></div>
+      <div id="historik-forloeb" style="margin-bottom:1rem;"></div>
+      <details style="margin-top:0.5rem">
+        <summary style="font-size:13px;color:#888;cursor:pointer;margin-bottom:0.5rem">Rådata</summary>
+        <div id="historik-radata" style="overflow-x:auto;"></div>
+      </details>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="primary" onclick="goHome()" style="flex:1">Tilbage</button>
+        <button class="primary" onclick="if(confirm('Slet al historik?'))sletHistorik()" style="font-size:12px;color:#999">Slet historik</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1414,6 +1441,11 @@ function nextQuestion() { qIndex++; if (qIndex >= sessionQs.length) showResult()
 function showResult() {
   const tot = correct_count + wrong_count;
   const pct = tot > 0 ? Math.round(correct_count / tot * 100) : 0;
+  try {
+    const sessions = JSON.parse(localStorage.getItem('mk_sessions') || '[]');
+    sessions.push({ dato: new Date().toISOString(), forloeb: selected, rigtige: correct_count, forkerte: wrong_count, pct });
+    localStorage.setItem('mk_sessions', JSON.stringify(sessions));
+  } catch(e) {}
   document.getElementById("res-correct").textContent = correct_count;
   document.getElementById("res-wrong").textContent = wrong_count;
   const pctEl = document.getElementById("res-pct");
@@ -1423,6 +1455,108 @@ function showResult() {
   show("screen-result");
 }
 init();
+
+// ===================== HISTORIK =====================
+function showHistorik() {
+  show('screen-historik');
+  const navn = localStorage.getItem('mk_navn');
+  if (!navn) {
+    document.getElementById('historik-navn-prompt').style.display = 'block';
+    document.getElementById('historik-indhold').style.display = 'none';
+    setTimeout(() => document.getElementById('historik-navn-input').focus(), 150);
+  } else {
+    visHistorikIndhold(navn);
+  }
+}
+function gemNavn() {
+  const inp = document.getElementById('historik-navn-input');
+  const navn = inp.value.trim();
+  if (!navn) return;
+  localStorage.setItem('mk_navn', navn);
+  document.getElementById('historik-navn-prompt').style.display = 'none';
+  visHistorikIndhold(navn);
+}
+function sletHistorik() {
+  localStorage.removeItem('mk_sessions');
+  localStorage.removeItem('mk_navn');
+  document.getElementById('historik-indhold').style.display = 'none';
+  document.getElementById('historik-navn-prompt').style.display = 'block';
+  document.getElementById('historik-navn-input').value = '';
+  setTimeout(() => document.getElementById('historik-navn-input').focus(), 150);
+}
+function visHistorikIndhold(navn) {
+  document.getElementById('historik-navn-prompt').style.display = 'none';
+  document.getElementById('historik-indhold').style.display = 'block';
+  document.getElementById('historik-hilsen').textContent = 'Hej ' + navn + '!';
+  const sessions = JSON.parse(localStorage.getItem('mk_sessions') || '[]');
+  const nu = new Date();
+  const ugeStart = (d, ugerBack) => { const d2 = new Date(d); d2.setDate(d2.getDate() - d2.getDay() + 1 - ugerBack * 7); d2.setHours(0,0,0,0); return d2; };
+  const dennUgeStart = ugeStart(nu, 0);
+  const sidsteUgeStart = ugeStart(nu, 1);
+  const dennUge = sessions.filter(s => new Date(s.dato) >= dennUgeStart);
+  const sidsteUge = sessions.filter(s => new Date(s.dato) >= sidsteUgeStart && new Date(s.dato) < dennUgeStart);
+  const avgPct = arr => arr.length === 0 ? null : Math.round(arr.reduce((s,x) => s + x.pct, 0) / arr.length);
+  const dennPct = avgPct(dennUge);
+  const sidstePct = avgPct(sidsteUge);
+  const ugeDiv = document.getElementById('historik-uge');
+  const sessEmoji = dennUge.length >= 10 ? '☁️' : dennUge.length >= 4 ? '❤️' : '🐼';
+  const scoreEmoji = dennPct === null ? '🥉' : dennPct >= 80 ? '🥇' : dennPct >= 30 ? '🥈' : '🥉';
+  const sessDiff = dennUge.length - sidsteUge.length;
+  const sessDiffStr = sessDiff > 0 ? `+${sessDiff}` : String(sessDiff);
+  const sessColor = sessDiff >= 0 ? '#27500A' : '#791F1F';
+  const pctDiff = (dennPct !== null && sidstePct !== null) ? dennPct - sidstePct : null;
+  const pctDiffStr = pctDiff !== null ? (pctDiff >= 0 ? `+${pctDiff}%` : `${pctDiff}%`) : null;
+  const pctColor = pctDiff !== null ? (pctDiff >= 0 ? '#27500A' : '#791F1F') : '#555';
+  ugeDiv.innerHTML = `<div style="display:flex;gap:10px">
+    <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+      <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${sessEmoji}</div>
+      <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du gennemført</div>
+      <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennUge.length}</div>
+      <div style="font-size:13px;color:#666">session${dennUge.length !== 1 ? 'er' : ''}</div>
+      ${sidsteUge.length > 0 ? `<div style="font-size:12px;color:${sessColor};margin-top:6px;font-weight:600">${sessDiffStr} ift. sidste uge (${sidsteUge.length})</div>` : ''}
+    </div>
+    <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+      <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${scoreEmoji}</div>
+      <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du fået</div>
+      <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennPct !== null ? dennPct + '%' : '—'}</div>
+      <div style="font-size:13px;color:#666">rigtige i snit</div>
+      ${pctDiffStr ? `<div style="font-size:12px;color:${pctColor};margin-top:6px;font-weight:600">${pctDiffStr} ift. sidste uge (${sidstePct}%)</div>` : ''}
+    </div>
+  </div>`;
+  const forloebDiv = document.getElementById('historik-forloeb');
+  forloebDiv.innerHTML = '<p style="font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Oversigt per forløb</p>';
+  if (sessions.length === 0) {
+    forloebDiv.innerHTML += '<p style="font-size:14px;color:#888">Ingen data endnu.</p>';
+  } else {
+    Object.entries(FORLOEB).forEach(([key, navn]) => {
+      const fs = sessions.filter(s => s.forloeb === key);
+      if (fs.length === 0) return;
+      const snit = avgPct(fs);
+      const color = snit >= 80 ? '#27500A' : snit >= 50 ? '#7A5800' : '#791F1F';
+      const bg = snit >= 80 ? '#EAF3DE' : snit >= 50 ? '#FFF8E1' : '#FCEBEB';
+      forloebDiv.innerHTML += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0ec;font-size:14px;">
+        <span style="color:#333"><strong>${key}</strong> — ${navn}</span>
+        <span style="display:flex;gap:12px;align-items:center">
+          <span style="color:#666">${fs.length} session${fs.length !== 1 ? 'er' : ''}</span>
+          <span style="background:${bg};color:${color};padding:2px 10px;border-radius:12px;font-weight:600">${snit}%</span>
+        </span>
+      </div>`;
+    });
+  }
+  const raDiv = document.getElementById('historik-radata');
+  if (sessions.length === 0) {
+    raDiv.innerHTML = '<p style="font-size:13px;color:#888">Ingen data.</p>';
+  } else {
+    let tbl = '<table class="data-table" style="font-size:12px"><thead><tr><th>Dato</th><th>Forløb</th><th>Rigtige</th><th>Forkerte</th><th>Score</th></tr></thead><tbody>';
+    [...sessions].reverse().forEach(s => {
+      const d = new Date(s.dato);
+      const datoStr = d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      tbl += `<tr><td>${datoStr}</td><td>${s.forloeb}</td><td>${s.rigtige}</td><td>${s.forkerte}</td><td>${s.pct}%</td></tr>`;
+    });
+    tbl += '</tbody></table>';
+    raDiv.innerHTML = tbl;
+  }
+}
 </script>
 </body>
 </html>
