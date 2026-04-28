@@ -645,6 +645,7 @@ function renderQuestion() {
   mcDiv.innerHTML = ""; inputDiv.style.display = "none"; drawDiv.style.display = "none";
   fieldsDiv.style.display = "none"; mc2Div.style.display = "none";
   pindeDiv.style.display = "none"; tableDiv.style.display = "none";
+  document.getElementById("table-dynamic-area").style.display = "none";
   nulpunkterDiv.style.display = "none"; sandsynlighedDiv.style.display = "none";
   selvDiv.style.display = "none"; monotoniDiv.style.display = "none";
   if (q.type === "mc") {
@@ -1424,7 +1425,7 @@ function buildDynamicTable() {
   const container = document.getElementById('table-dynamic-container');
   let html = '<table class="data-table"><thead><tr><th>u</th>';
   for (let i = 0; i < n; i++) {
-    html += `<th><input type="text" id="td-u-${i}" placeholder="udfald ${i+1}" style="width:70px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;"></th>`;
+    html += `<th style="font-weight:600">${q.udfaldsNavn[i]}</th>`;
   }
   html += '</tr></thead><tbody><tr><td>P(u)</td>';
   for (let i = 0; i < n; i++) {
@@ -1434,7 +1435,7 @@ function buildDynamicTable() {
   container.innerHTML = html;
   container.style.display = 'block';
   document.getElementById('td-check-btn').style.display = 'block';
-  setTimeout(() => document.getElementById('td-u-0').focus(), 100);
+  setTimeout(() => document.getElementById('td-p-0').focus(), 100);
 }
 
 function checkDynamicTable() {
@@ -1443,19 +1444,11 @@ function checkDynamicTable() {
   const n = q.correctCount;
   let allOk = true;
   for (let i = 0; i < n; i++) {
-    const uInp = document.getElementById('td-u-' + i);
     const pInp = document.getElementById('td-p-' + i);
-    const uVal = normalizeAnswer(uInp.value);
-    const matchIdx = q.udfaldsNavn.findIndex(u => normalizeAnswer(u) === uVal);
-    if (matchIdx === -1) {
-      uInp.style.background = '#FCEBEB'; allOk = false;
-    } else {
-      uInp.style.background = '#EAF3DE'; uInp.disabled = true;
-      const pVal = normalizeAnswer(pInp.value.replace(',', '.'));
-      const pExp = normalizeAnswer(q.answers[matchIdx]);
-      if (pVal === pExp) { pInp.style.background = '#EAF3DE'; pInp.disabled = true; }
-      else { pInp.style.background = '#FCEBEB'; allOk = false; }
-    }
+    const pVal = normalizeAnswer(pInp.value.trim().replace(',', '.'));
+    const pExp = normalizeAnswer(String(q.answers[i]).replace(',', '.'));
+    if (pVal === pExp) { pInp.style.background = '#EAF3DE'; pInp.disabled = true; }
+    else { pInp.style.background = '#FCEBEB'; allOk = false; }
   }
   if (allOk) {
     showFeedback(true, 'Korrekt! ' + q.explanation);
