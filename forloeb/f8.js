@@ -96,10 +96,14 @@ GENERATORS.F8 = [
     const yVals = [...xs.map(fn), ...xs.map(dfn)];
     const yMin  = Math.min(...yVals);
     const yMax  = Math.max(...yVals);
+    // Beregn y-range kun for synligt x-interval [-6, 6]
+    const visibleYVals = xs.filter((_,i) => xs[i] >= -6 && xs[i] <= 6).flatMap(x => [fn(x), dfn(x)]);
+    const yMin6 = Math.min(...visibleYVals) * 1.1;
+    const yMax6 = Math.max(...visibleYVals) * 1.1;
     const layout = Object.assign({}, PLOTLY_LAYOUT_BASE, {
       height: 320, showlegend: true, legend: { x: 0.02, y: 0.98 }, dragmode: 'pan',
       xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { range: [-6, 6], autorange: false }),
-      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { autorange: true })
+      yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [yMin6, yMax6], autorange: false })
     });
     return {
       type: "mc2",
