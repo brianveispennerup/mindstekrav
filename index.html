@@ -962,7 +962,7 @@ function buildMonotoniIntervals(n) {
     const addInput = id => { const inp = document.createElement("input"); inp.type="text"; inp.id=id; inp.style.cssText="width:50px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;"; row.appendChild(inp); };
     if (n === 1) { addSpan("]−∞ ; ∞["); }
     else if (i === 0) { addSpan("]−∞ ;"); addInput("mono_val_0"); addSpan("]"); }
-    else if (i === n - 1) { addInput("mono_val_last"); addSpan("; ∞["); }
+    else if (i === n - 1) { addSpan("["); addInput("mono_val_last"); addSpan("; ∞["); }
     else { addInput("mono_val_"+i+"_left"); addSpan(";"); addInput("mono_val_"+i); addSpan("]"); }
     const vBtn = document.createElement("button");
     vBtn.className="mc-option"; vBtn.textContent="Voksende"; vBtn.dataset.row=String(i); vBtn.dataset.val="V"; vBtn.dataset.selected="false";
