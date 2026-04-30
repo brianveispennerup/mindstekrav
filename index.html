@@ -1100,7 +1100,10 @@ function checkTable() {
       inp.disabled = true;
       const val = normalizeAnswer(inp.value.replace(',', '.'));
       const expected = normalizeAnswer(q.answers[ri][inputIdx].replace(',', '.'));
-      if (val !== expected) {
+      // Accepter numerisk ækvivalens: "0,00" === "0", "1,00" === "1"
+      const numVal = parseFloat(val), numExp = parseFloat(expected);
+      const numEq = !isNaN(numVal) && !isNaN(numExp) && Math.abs(numVal - numExp) < 0.001;
+      if (val !== expected && !numEq) {
         allOk = false;
         inp.style.background = '#FCEBEB';
         inp.value = q.answers[ri][inputIdx]; // vis korrekt svar
