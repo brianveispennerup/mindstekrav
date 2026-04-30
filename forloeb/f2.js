@@ -25,7 +25,15 @@ GENERATORS.F2 = [
   () => {
     const vals = [1, 2, 3, 4, 5, 6];
     const n = rnd(15, 30);
-    const hyps = Array.from({ length: 6 }, () => rnd(1, Math.floor(n / 3)));
+    // Sikr præcis ét typetal: generer hyppigheder og giv det valgte typtal en unik max
+    let hyps;
+    do {
+      hyps = Array.from({ length: 6 }, () => rnd(1, Math.floor(n / 3)));
+      // Sæt én unik max
+      const typIdx2 = rnd(0, 5);
+      const maxVal = Math.max(...hyps) + rnd(1, 3);
+      hyps[typIdx2] = maxVal;
+    } while (hyps.filter(h => h === Math.max(...hyps)).length !== 1);
     const tot = hyps.reduce((a, b) => a + b, 0);
     const typIdx = hyps.indexOf(Math.max(...hyps));
     const typtal = vals[typIdx];
