@@ -1432,6 +1432,101 @@ function showResult() {
   show("screen-result");
 }
 init();
+
+function buildDynamicTable() {
+  var q = sessionQs[qIndex];
+  var countInp = document.getElementById('td-count-input');
+  var n = parseInt(countInp.value);
+  if (isNaN(n)||n<1||n>10) { countInp.style.borderColor='#c0392b'; return; }
+  countInp.style.borderColor='#ccc';
+  if (n !== q.correctCount) { countInp.style.borderColor='#c0392b'; showFeedback(false,'Antallet af udfald er ikke korrekt. Prøv igen.'); return; }
+  var container = document.getElementById('table-dynamic-container');
+  var html = '<table class="data-table"><thead><tr><th>u</th>';
+  for (var i=0;i<n;i++) html += '<th style="font-weight:600">'+q.udfaldsNavn[i]+'</th>';
+  html += '</tr></thead><tbody><tr><td>P(u)</td>';
+  for (var i=0;i<n;i++) html += "<td><input type=\"text\" id=\"td-p-"+i+"\" placeholder=\"P\" style=\"width:70px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;\" onkeydown=\"if(event.key==='Enter')checkDynamicTable()\"></td>";
+  html += '</tr></tbody></table>';
+  container.innerHTML=html; container.style.display='block';
+  document.getElementById('td-check-btn').style.display='block';
+  setTimeout(function(){var el=document.getElementById('td-p-0');if(el)el.focus();},100);
+}
+
+function checkDynamicTable() {
+  if (answered) return;
+  const q = sessionQs[qIndex]; const n = q.correctCount; let allOk=true;
+  for (let i=0;i<n;i++) {
+    const pInp = document.getElementById('td-p-'+i);
+    const pVal = normalizeAnswer(pInp.value.trim().replace(',','.'));
+    const pExp = normalizeAnswer(String(q.answers[i]).replace(',','.'));
+    if (pVal===pExp) { pInp.style.background='#EAF3DE'; pInp.disabled=true; }
+    else { pInp.style.background='#FCEBEB'; allOk=false; }
+  }
+  if (allOk) { showFeedback(true,'Korrekt! '+q.explanation); answered=true; correct_count++; }
+  else { showFeedback(false,'Ikke helt rigtigt. '+q.explanation); answered=true; wrong_count++; }
+  document.getElementById('next-btn').style.display='block';
+}
+
+function showHistorik() {
+  show('screen-historik');
+  const navn = localStorage.getItem('mk_navn');
+  if (!navn) { document.getElementById('historik-navn-prompt').style.display='block'; document.getElementById('historik-indhold').style.display='none'; setTimeout(()=>document.getElementById('historik-navn-input').focus(),150); }
+  else visHistorikIndhold(navn);
+}
+function gemNavn() {
+  const inp = document.getElementById('historik-navn-input'); const navn = inp.value.trim();
+  if (!navn) return;
+  localStorage.setItem('mk_navn', navn);
+  document.getElementById('historik-navn-prompt').style.display='none';
+  visHistorikIndhold(navn);
+}
+function sletHistorik() {
+  localStorage.removeItem('mk_sessions'); localStorage.removeItem('mk_navn');
+  document.getElementById('historik-indhold').style.display='none';
+  document.getElementById('historik-navn-prompt').style.display='block';
+  document.getElementById('historik-navn-input').value='';
+  setTimeout(()=>document.getElementById('historik-navn-input').focus(),150);
+}
+function visHistorikIndhold(navn) {
+  document.getElementById('historik-navn-prompt').style.display='none';
+  document.getElementById('historik-indhold').style.display='block';
+  document.getElementById('historik-hilsen').textContent='Hej '+navn+'!';
+  const sessions = JSON.parse(localStorage.getItem('mk_sessions')||'[]');
+  const nu = new Date();
+  const ugeStart = (d,b) => { const d2=new Date(d); d2.setDate(d2.getDate()-d2.getDay()+1-b*7); d2.setHours(0,0,0,0); return d2; };
+  const dennUge = sessions.filter(s=>new Date(s.dato)>=ugeStart(nu,0));
+  const sidsteUge = sessions.filter(s=>new Date(s.dato)>=ugeStart(nu,1)&&new Date(s.dato)<ugeStart(nu,0));
+  const avgPct = arr => arr.length===0?null:Math.round(arr.reduce((s,x)=>s+x.pct,0)/arr.length);
+  const dennPct=avgPct(dennUge), sidstePct=avgPct(sidsteUge);
+  const sessEmoji=dennUge.length>=10?'☁️':dennUge.length>=4?'❤️':'🐼';
+  const scoreEmoji=dennPct===null?'🥉':dennPct>=80?'🥇':dennPct>=30?'🥈':'🥉';
+  const sessDiff=dennUge.length-sidsteUge.length;
+  const pctDiff=(dennPct!==null&&sidstePct!==null)?dennPct-sidstePct:null;
+  const sessColor=sessDiff>=0?'#27500A':'#791F1F';
+  const pctColor=pctDiff!==null?(pctDiff>=0?'#27500A':'#791F1F'):'#555';
+  document.getElementById('historik-uge').innerHTML=`<div style="display:flex;gap:10px">
+    <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+      <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${sessEmoji}</div>
+      <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du gennemført</div>
+      <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennUge.length}</div>
+      <div style="font-size:13px;color:#666">session${dennUge.length!==1?'er':''}</div>
+      ${sidsteUge.length>0?`<div style="font-size:12px;color:${sessColor};margin-top:6px;font-weight:600">${sessDiff>0?'+'+sessDiff:sessDiff} ift. sidste uge (${sidsteUge.length})</div>`:''}
+    </div>
+    <div style="flex:1;background:#fff;border:1px solid #e0e0d8;border-radius:10px;padding:1rem;text-align:center;">
+      <div style="font-size:48px;line-height:1.1;margin-bottom:6px">${scoreEmoji}</div>
+      <div style="font-size:14px;color:#555;margin-bottom:2px">Denne uge har du fået</div>
+      <div style="font-size:28px;font-weight:600;color:#185FA5;margin:4px 0">${dennPct!==null?dennPct+'%':'—'}</div>
+      <div style="font-size:13px;color:#666">rigtige i snit</div>
+      ${pctDiff!==null?`<div style="font-size:12px;color:${pctColor};margin-top:6px;font-weight:600">${pctDiff>=0?'+'+pctDiff+'%':pctDiff+'%'} ift. sidste uge (${sidstePct}%)</div>`:''}
+    </div>
+  </div>`;
+  const forloebDiv=document.getElementById('historik-forloeb');
+  forloebDiv.innerHTML='<p style="font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Oversigt per forløb</p>';
+  if (!sessions.length) { forloebDiv.innerHTML+='<p style="font-size:14px;color:#888">Ingen data endnu.</p>'; }
+  else { Object.entries(FORLOEB).forEach(([key,navn])=>{ const fs=sessions.filter(s=>s.forloeb===key); if(!fs.length) return; const snit=avgPct(fs); const color=snit>=80?'#27500A':snit>=50?'#7A5800':'#791F1F'; const bg=snit>=80?'#EAF3DE':snit>=50?'#FFF8E1':'#FCEBEB'; forloebDiv.innerHTML+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0ec;font-size:14px;"><span style="color:#333"><strong>${key}</strong> — ${navn}</span><span style="display:flex;gap:12px;align-items:center"><span style="color:#666">${fs.length} session${fs.length!==1?'er':''}</span><span style="background:${bg};color:${color};padding:2px 10px;border-radius:12px;font-weight:600">${snit}%</span></span></div>`; }); }
+  const raDiv=document.getElementById('historik-radata');
+  if (!sessions.length) { raDiv.innerHTML='<p style="font-size:13px;color:#888">Ingen data.</p>'; }
+  else { let tbl='<table class="data-table" style="font-size:12px"><thead><tr><th>Dato</th><th>Forløb</th><th>Rigtige</th><th>Forkerte</th><th>Score</th></tr></thead><tbody>'; [...sessions].reverse().forEach(s=>{ const d=new Date(s.dato); tbl+=`<tr><td>${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</td><td>${s.forloeb}</td><td>${s.rigtige}</td><td>${s.forkerte}</td><td>${s.pct}%</td></tr>`; }); tbl+='</tbody></table>'; raDiv.innerHTML=tbl; }
+}
 </script>
 </body>
 </html>
