@@ -61,7 +61,10 @@ GENERATORS.F2 = [
     const freqs = hyps.map(h => Math.round(h / tot * 100) / 100);
     let cumFreqs = [];
     let cum = 0;
-    freqs.forEach(f => { cum = Math.round((cum + f) * 100) / 100; cumFreqs.push(cum); });
+    freqs.forEach((f, i) => {
+      cum = Math.round((cum + f) * 100) / 100;
+      cumFreqs.push(i === freqs.length - 1 ? 1 : cum);
+    });
     return {
       type: "table",
       text: `Nedenstående tabel viser fordelingen af karakterer til en eksamen for ${tot} elever.\nBeregn frekvenserne og de summerede frekvenser.`,

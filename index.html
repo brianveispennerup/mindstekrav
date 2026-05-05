@@ -1278,6 +1278,15 @@ function polyEqual(a, b) {
   } catch(e) { return false; }
 }
 
+// Sammenlign to tal numerisk med tolerance — accepterer "2" === "2,00", "0,07" === "0.07"
+function numericEqual(a, b, tolerance) {
+  if (tolerance === undefined) tolerance = 0.005;
+  const na = parseFloat(String(a).replace(',', '.'));
+  const nb = parseFloat(String(b).replace(',', '.'));
+  if (isNaN(na) || isNaN(nb)) return false;
+  return Math.abs(na - nb) <= tolerance;
+}
+
 function normalizeAnswer(s) {
   return s.toLowerCase().trim()
     .replace(/\s+/g, '')         // fjern alle mellemrum
@@ -1326,10 +1335,8 @@ function checkFields() {
     const val = inp ? normalizeAnswer(inp.value.replace(",", ".")) : "";
     const expected = normalizeAnswer(q.answers[i].replace(",", "."));
     let ok = val === expected;
-    if (!ok && q.accept_tolerance) {
-      const numVal = parseFloat(val), numExp = parseFloat(expected);
-      if (!isNaN(numVal) && !isNaN(numExp) && Math.abs(numVal - numExp) <= q.accept_tolerance) ok = true;
-    }
+    // Numerisk ækvivalens: "2" === "2,00", "0,07" === "0,07"
+    if (!ok) ok = numericEqual(val, expected, q.accept_tolerance || 0.005);
     if (!ok && q.usePolyEqual && i === 0) ok = polyEqual(val, expected);
     if (!ok && q.usePolyEqual && i === 0) ok = polyEqual(val, expected);
     if (!ok) allOk = false;
@@ -1394,7 +1401,8 @@ function checkInput() {
   const q = sessionQs[qIndex];
   const val = normalizeAnswer(document.getElementById("answer-input").value.replace(",", "."));
   const accepts = q.accept.map(a => normalizeAnswer(a.replace(",", ".")));
-  const ok = accepts.includes(val);
+  const rawVal = document.getElementById("answer-input").value.replace(",", ".");
+  const ok = accepts.includes(val) || q.accept.some(a => numericEqual(rawVal, a.replace(",", ".")));
   answered = true; document.getElementById("answer-input").disabled = true;
   if (ok) { showFeedback(true, q.explanation); correct_count++; }
   else { showFeedback(false, "Forkert — svaret er: " + q.answer + ". " + q.explanation); wrong_count++; }
