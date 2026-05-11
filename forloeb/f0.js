@@ -21,9 +21,9 @@ GENERATORS.F0 = [
     const a = rnd(2, 5), bx = rnd(1, 6), by = rnd(1, 6), cx = rnd(1, 5), cy = rnd(1, 6);
     const rx = a * bx - cx, ry = a * (-by) + cy;
     let ans = '';
-    if (rx !== 0) ans += rx + 'x';
-    if (ry > 0) ans += (ans ? ' + ' : '') + ry + 'y';
-    else if (ry < 0) ans += (ans ? ' − ' : '-') + Math.abs(ry) + 'y';
+    if (rx !== 0) ans += (rx === 1 ? '' : rx === -1 ? '-' : rx) + 'x';
+    if (ry > 0) ans += (ans ? ' + ' : '') + (ry === 1 ? '' : ry) + 'y';
+    else if (ry < 0) ans += (ans ? ' − ' : '-') + (Math.abs(ry) === 1 ? '' : Math.abs(ry)) + 'y';
     if (!ans) ans = '0';
     return {
       type: "input",
