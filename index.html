@@ -1279,6 +1279,22 @@ function polyEqual(a, b) {
 }
 
 // Sammenlign to tal numerisk med tolerance — accepterer "2" === "2,00", "0,07" === "0.07"
+function normalizeInterval(s) {
+  return String(s)
+    .replace(/\s+/g, '')
+    .replace(/\u2212/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/(-?\d+)[,.]+(\d+)/g, (_, int, dec) => {
+      const num = parseFloat(int + '.' + dec);
+      return Number.isInteger(num) ? String(parseInt(int)) : (int + '.' + dec);
+    })
+    .toLowerCase();
+}
+
+function intervalEqual(a, b) {
+  return normalizeInterval(a) === normalizeInterval(b);
+}
+
 function numericEqual(a, b, tolerance) {
   if (tolerance === undefined) tolerance = 0.005;
   const na = parseFloat(String(a).replace(',', '.'));
@@ -1335,8 +1351,10 @@ function checkFields() {
     const val = inp ? normalizeAnswer(inp.value.replace(",", ".")) : "";
     const expected = normalizeAnswer(q.answers[i].replace(",", "."));
     let ok = val === expected;
-    // Numerisk ækvivalens: "2" === "2,00", "0,07" === "0,07"
+    // Numerisk ækvivalens: "2" === "2,00"
     if (!ok) ok = numericEqual(val, expected, q.accept_tolerance || 0.005);
+    // Interval ækvivalens: "[ -4 ; 2 [" === "[-4;2["
+    if (!ok && q.intervalFields) ok = intervalEqual(inp.value, q.answers[i]);
     if (!ok && q.usePolyEqual && i === 0) ok = polyEqual(val, expected);
     if (!ok && q.usePolyEqual && i === 0) ok = polyEqual(val, expected);
     if (!ok) allOk = false;

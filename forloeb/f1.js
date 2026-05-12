@@ -50,30 +50,55 @@ GENERATORS.F1 = [
     };
   },
 
-  // 4. Aflæs Dm og Vm
+  // 4. Aflæs Dm og Vm — voksende/aftagende, åbne/lukkede endepunkter
   () => {
     const a = rnd(-3, 3) || 1, b = rnd(-5, 5);
     const x1 = rnd(-4, 0), x2 = x1 + rnd(3, 6);
     const y1 = a * x1 + b, y2 = a * x2 + b;
     const yMin = Math.min(y1, y2), yMax = Math.max(y1, y2);
-    const vmY1 = a > 0 ? y1 : y2, vmY2 = a > 0 ? y2 : y1;
-    const t1 = { x: [x1, x2], y: [y1, y2], mode: 'lines', line: { color: '#185FA5', width: 2.5 } };
-    const tS = makeScatterTrace([x1], [y1], '#185FA5', 10);
-    const tE = { x: [x2], y: [y2], mode: 'markers', marker: { color: '#185FA5', size: 10, symbol: 'circle-open', line: { width: 2, color: '#185FA5' } } };
-    const graph = plotLines([t1, tS, tE], [x1 - 2, x2 + 2], [yMin - 2, yMax + 2]);
+
+    // Tilfældig kombination af åbne/lukkede endepunkter
+    const leftClosed  = Math.random() > 0.5;
+    const rightClosed = Math.random() > 0.5;
+
+    // Plotly markers: fyldt = lukket, tom cirkel = åbent
+    const tLine = { x: [x1, x2], y: [y1, y2], mode: 'lines', line: { color: '#185FA5', width: 2.5 } };
+    const makePoint = (x, y, closed) => ({
+      x: [x], y: [y], mode: 'markers',
+      marker: closed
+        ? { color: '#185FA5', size: 10 }
+        : { color: '#fff', size: 10, symbol: 'circle', line: { width: 2.5, color: '#185FA5' } }
+    });
+    const tLeft  = makePoint(x1, y1, leftClosed);
+    const tRight = makePoint(x2, y2, rightClosed);
+    const graph = plotLines([tLine, tLeft, tRight], [x1 - 2, x2 + 2], [yMin - 2, yMax + 2]);
+
+    // Dm
+    const dmLeft  = leftClosed  ? '[' : ']';
+    const dmRight = rightClosed ? ']' : '[';
+    const dmStr = `${dmLeft}${x1} ; ${x2}${dmRight}`;
+
+    // Vm: y1 hører til venstre endepunkt, y2 til højre
+    const yMinVal = Math.min(y1, y2);
+    const yMaxVal = Math.max(y1, y2);
+    const yMinClosed = (y1 < y2) ? leftClosed : rightClosed;
+    const yMaxClosed = (y1 < y2) ? rightClosed : leftClosed;
+    const vmLeft  = yMinClosed ? '[' : ']';
+    const vmRight = yMaxClosed ? ']' : '[';
+    const vmStr = `${vmLeft}${yMinVal} ; ${yMaxVal}${vmRight}`;
+
     return {
       type: "fields",
       text: `Nedenfor er tegnet det grafiske billede for en begrænset lineær funktion. Aflæs definitionsmængden og værdimængden.`,
       graph,
       fields: [
-        { prefix: "Dm = [", suffix: ";" },
-        { suffix: "[   Vm = [" },
-        { suffix: ";" },
-        { suffix: "[" }
+        { prefix: "Dm =" },
+        { prefix: "Vm =" }
       ],
-      answers: [String(x1), String(x2), String(vmY1), String(vmY2)],
+      answers: [dmStr, vmStr],
+      intervalFields: true,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=250#c1095",
-      explanation: `Definitionsmængden aflæses på x-aksen: Dm = [${x1}; ${x2}[. Værdimængden på y-aksen: Vm = [${vmY1}; ${vmY2}[.`
+      explanation: `Definitionsmængden aflæses på x-aksen: Dm = ${dmStr}. Værdimængden på y-aksen: Vm = ${vmStr}.`
     };
   },
 
