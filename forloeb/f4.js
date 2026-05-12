@@ -18,7 +18,7 @@ GENERATORS.F4 = [
   // 2. Annuitetslån — månedlig ydelse
   () => {
     const K0 = rnd(4, 20) * 10000, rm = rndF(0.3, 1.0, 1), n = rnd(24, 84);
-    const r = rm / 100, y = Math.round(K0 * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1) * 100) / 100;
+    const r = Math.round(rm * 10) / 1000, y = Math.round(K0 * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1) * 100) / 100;
     return {
       type: "input",
       text: `En person ønsker at optage et annuitetslån på ${K0} kr. til køb af en bil.\nDen månedlige rente er på ${fmt(rm)}% og tilbagebetalingsperioden er på ${n} måneder.\nBestem den månedlige ydelse y.\n(Svar angives med 2 decimaler)`,
@@ -32,7 +32,7 @@ GENERATORS.F4 = [
   // 3. Annuitetsopsparing — fremtidsværdi
   () => {
     const yv = rnd(1, 10) * 100, rm = rndF(0.5, 2.0, 1), n = rnd(6, 24);
-    const r = rm / 100, An = Math.round(yv * (Math.pow(1 + r, n) - 1) / r * 100) / 100;
+    const r = Math.round(rm * 10) / 1000, An = Math.round(yv * (Math.pow(1 + r, n) - 1) / r * 100) / 100;
     return {
       type: "input",
       text: `Der indsættes hver måned kr. ${yv} på en konto.\nBeløbet indsættes i alt ${n} gange og den månedlige rente er ${fmt(rm)}%.\nHvor meget står der på kontoen efter den sidste indbetaling?\n(Svar angives med 2 decimaler)`,
