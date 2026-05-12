@@ -1420,7 +1420,7 @@ function checkInput() {
   const val = normalizeAnswer(document.getElementById("answer-input").value.replace(",", "."));
   const accepts = q.accept.map(a => normalizeAnswer(a.replace(",", ".")));
   const rawVal = document.getElementById("answer-input").value.replace(",", ".");
-  const ok = accepts.includes(val) || q.accept.some(a => numericEqual(rawVal, a.replace(",", ".")));
+  const ok = accepts.includes(val) || q.accept.some(a => numericEqual(rawVal, a.replace(",", "."), q.accept_tolerance));
   answered = true; document.getElementById("answer-input").disabled = true;
   if (ok) { showFeedback(true, q.explanation); correct_count++; }
   else { showFeedback(false, "Forkert — svaret er: " + q.answer + ". " + q.explanation); wrong_count++; }
