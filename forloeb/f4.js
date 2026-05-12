@@ -12,7 +12,7 @@ GENERATORS.F4 = [
       accept: [fmt(Kn), String(Kn), String(Math.round(Kn))],
       accept_tolerance: 0.015,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=281#c509",
-      explanation: `Kₙ = K₀ · (1 + r)ⁿ = ${K0} · ${fmt(1 + r / 100)}^${n} = ${fmt(Kn)} kr.`
+      explanation: `Svar: ${fmt(Kn)} kr.`
     };
   },
 
@@ -27,7 +27,7 @@ GENERATORS.F4 = [
       accept: [fmt(y), String(y)],
       accept_tolerance: 0.015,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=284#c2868",
-      explanation: `y = K₀ · r · (1+r)ⁿ / ((1+r)ⁿ − 1) ≈ ${fmt(y)} kr.`
+      explanation: `Svar: ${fmt(y)} kr.`
     };
   },
 
@@ -42,7 +42,7 @@ GENERATORS.F4 = [
       accept: [fmt(An), String(An)],
       accept_tolerance: 0.015,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=283#c2835",
-      explanation: `Aₙ = y · ((1+r)ⁿ − 1) / r = ${yv} · ((1+${fmt(r)})^${n} − 1) / ${fmt(r)} ≈ ${fmt(An)} kr.`
+      explanation: `Svar: ${fmt(An)} kr.`
     };
   },
 
@@ -56,7 +56,7 @@ GENERATORS.F4 = [
       accept: [fmt(rEff), String(rEff), fmt(rEff)+"%", String(rEff)+"%"],
       accept_tolerance: 0.015,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=282#c2900",
-      explanation: `reff = (1 + ${fmt(rq)}/100)⁴ − 1 = ${fmt(rEff)}%`
+      explanation: `Svar: ${fmt(rEff)}%`
     };
   },
 
