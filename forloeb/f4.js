@@ -48,12 +48,12 @@ GENERATORS.F4 = [
 
   // 4. Effektiv rente fra kvartalsrente
   () => {
-    const rq = rndF(0.5, 4.0, 1), rEff = Math.round(((Math.pow(1 + rq / 100, 4) - 1) * 100) * 100) / 100;
+    const rq = rndF(0.5, 4.0, 1), rqR = Math.round(rq * 10) / 1000, rEff = Math.round(((Math.pow(1 + rqR, 4) - 1) * 100) * 100) / 100;
     return {
       type: "input",
       text: `Bestem den årlige effektive rente, når kvartalsrenten (terminsrenten) er på ${fmt(rq)}%.\n(Svar angives med 2 decimaler)`,
       answer: fmt(rEff),
-      accept: [fmt(rEff), String(rEff)],
+      accept: [fmt(rEff), String(rEff), fmt(rEff)+"%", String(rEff)+"%"],
       accept_tolerance: 0.015,
       link: "https://laerebogimatematik1hhx.systime.dk/?id=282#c2900",
       explanation: `reff = (1 + ${fmt(rq)}/100)⁴ − 1 = ${fmt(rEff)}%`
